@@ -1,0 +1,18 @@
+[package]
+name = "wololo"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = "0.7"
+tokio = { version = "1", features = ["full"] }
+tower-http = { version = "0.5.0", features = ["fs"] }
+rust-embed = "8"
+axum-embed = "0.1.0"
+axum-extra = { version = "0.9.2", features = ["cookie"] }
+handlebars = "6.3.2"
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
+wol-rs = "1.1.0"
+eui48 = "1.1.0"
+serde_json = { version = "1.0.140" }

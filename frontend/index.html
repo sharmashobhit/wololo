@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Axum + HTMX + Handlebars</title>
+    <script src="/assets/htmx.min.js"></script>
+    <!-- You can link to a CSS file in your /assets folder here if you have one -->
+    <!-- e.g., <link rel="stylesheet" href="/assets/styles.css"> -->
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 20px;
+        background-color: #f4f4f4;
+        color: #333;
+      }
+      h1,
+      h2 {
+        color: #2c3e50;
+      }
+      .container {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      button {
+        padding: 10px 15px;
+        background-color: #3498db;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-bottom: 20px;
+      }
+      button:hover {
+        background-color: #2980b9;
+      }
+      ul {
+        list-style-type: none;
+        padding: 0;
+      }
+      li {
+        background-color: #ecf0f1;
+        border: 1px solid #bdc3c7;
+        padding: 10px;
+        margin-bottom: 5px;
+        border-radius: 4px;
+      }
+      .device-name {
+        font-weight: bold;
+      }
+      .device-ip {
+        color: #7f8c8d;
+      }
+      .device-status {
+        font-style: italic;
+        color: #27ae60;
+      }
+      .no-devices {
+        color: #c0392b;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Axum + HTMX + Handlebars</h1>
+      <p>Server External URL: <strong>{{external_url}}</strong></p>
+
+      <button hx-get="/hello" hx-target="#hello-response" hx-swap="innerHTML">
+        Say Hello
+      </button>
+      <div id="hello-response"></div>
+
+      <h2>Registered Devices</h2>
+      {{#if devices}}
+      <ul>
+        {{#each devices}}
+        <li>
+          <span class="device-name">{{this.name}}</span>
+          {{#if this.ip}} -
+          <span class="device-ip">IP: {{this.ip}}</span> {{/if}} {{#if
+          this.status}} -
+          <span class="device-status">Status: {{this.status}}</span>
+          {{/if}}
+          <!-- Add other device properties here as needed -->
+          <!-- Example: {{#if this.mac}} - MAC: {{this.mac}} {{/if}} -->
+        </li>
+        {{/each}}
+      </ul>
+      {{else}}
+      <p class="no-devices">No devices found or configured.</p>
+      {{/if}}
+    </div>
+  </body>
+</html>

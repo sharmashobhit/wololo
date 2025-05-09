@@ -1,0 +1,7 @@
+devices:
+  - name: "Main PC"
+    mac_address: "74:56:3c:76:23:1f"
+    ip_address: "192.168.29.185"
+  - name: "Living Room PC"
+    mac_address: "A0:B1:C2:D3:E4:F5"
+    ip_address: "192.168.1.101"
