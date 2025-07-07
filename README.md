@@ -8,6 +8,9 @@ A simple and efficient web-based Wake On LAN (WoL) management tool built with Ru
 
 - 🌐 **Web-based Interface**: Clean, responsive UI built with HTMX and Tailwind CSS
 - 🔧 **YAML Configuration**: Simple device management through configuration files
+- 🔍 **Network Discovery**: Automatic device discovery with config generation
+- 📊 **Real-time Status**: Live device status monitoring with ping functionality
+- ⏱️ **Configurable Sync**: Automatic periodic status updates
 - 🚀 **Fast & Lightweight**: Built with Rust for optimal performance
 - 🏠 **Homelab Ready**: Perfect for self-hosted environments
 - 📱 **Mobile Friendly**: Responsive design works on all devices
@@ -48,7 +51,7 @@ devices:
 cargo run
 ```
 
-5. Open your browser and navigate to `http://localhost:8080`
+5. Open your browser and navigate to `http://localhost:3000`
 
 ## Configuration
 
@@ -57,8 +60,12 @@ The application uses a YAML configuration file (`config.yaml`) to manage devices
 ```yaml
 server:
   ip: "0.0.0.0"
-  port: 8080
-  external_url: "http://localhost:8080"
+  port: 3000
+  external_url: "http://localhost:3000"
+
+sync:
+  enabled: true
+  interval_seconds: 30  # Auto-refresh device status every 30 seconds
 
 devices:
   - name: "Device Name"
@@ -69,12 +76,32 @@ devices:
 ### Configuration Options
 
 - `server.ip`: IP address to bind the server (default: 0.0.0.0)
-- `server.port`: Port to run the server (default: 8080)
+- `server.port`: Port to run the server (default: 3000)
 - `server.external_url`: External URL for the application
+- `sync.enabled`: Enable/disable automatic device status refresh (default: true)
+- `sync.interval_seconds`: Interval for automatic refresh in seconds (default: 60)
 - `devices`: List of devices to manage
   - `name`: Friendly name for the device
   - `mac_address`: MAC address of the device (required for WoL)
   - `ip_address`: IP address of the device
+
+## Device Discovery
+
+Wololo includes a powerful network discovery feature to automatically find devices on your network:
+
+1. **Navigate to Discovery**: Click the "Discovery" tab in the web interface
+2. **Start Network Scan**: Click "Start Network Scan" to discover devices
+3. **Review Results**: Found devices will be displayed with their status, IP, MAC, and hostname
+4. **Generate Config**: Select desired devices and click "Generate Config"
+5. **Download**: Download the updated `config.yaml` file with discovered devices
+
+### Discovery Features
+
+- **Automatic Network Detection**: Scans your local network subnets
+- **Device Information**: Retrieves IP addresses, MAC addresses, and hostnames
+- **Status Checking**: Shows which devices are currently online/offline
+- **Selective Addition**: Choose which discovered devices to include
+- **Config Integration**: Merges with existing configuration seamlessly
 
 ## Technology Stack
 

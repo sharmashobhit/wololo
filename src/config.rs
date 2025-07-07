@@ -22,6 +22,15 @@ fn default_external_url() -> String {
     format!("http://{}:{}", default_ip(), default_port())
 }
 
+// Functions to provide default values for SyncConfig
+fn default_sync_enabled() -> bool {
+    true
+}
+
+fn default_sync_interval() -> u32 {
+    60 // Default to 60 seconds
+}
+
 // Struct for server configuration
 #[derive(Debug, Deserialize, Clone)]
 pub struct ServerConfig {
@@ -45,11 +54,32 @@ impl Default for ServerConfig {
     }
 }
 
+// Struct for sync configuration
+#[derive(Debug, Deserialize, Clone)]
+pub struct SyncConfig {
+    #[serde(default = "default_sync_enabled")]
+    pub enabled: bool,
+    #[serde(default = "default_sync_interval")]
+    pub interval_seconds: u32,
+}
+
+// Implement Default for SyncConfig
+impl Default for SyncConfig {
+    fn default() -> Self {
+        SyncConfig {
+            enabled: default_sync_enabled(),
+            interval_seconds: default_sync_interval(),
+        }
+    }
+}
+
 // Main configuration struct
 #[derive(Debug, Deserialize, Clone)]
 pub struct Config {
     #[serde(default)] // If the whole server section is missing, use ServerConfig::default()
     pub server: ServerConfig,
+    #[serde(default)] // If the whole sync section is missing, use SyncConfig::default()
+    pub sync: SyncConfig,
     pub devices: Vec<Device>,
 }
 
@@ -57,5 +87,11 @@ pub struct Config {
 pub fn load_config() -> Result<Config, Box<dyn std::error::Error>> {
     let config_str = fs::read_to_string("config.yaml")?;
     let config: Config = serde_yaml::from_str(&config_str)?;
+    Ok(config)
+}
+
+// Function to load config from string (for testing)
+pub fn load_config_from_str(config_str: &str) -> Result<Config, Box<dyn std::error::Error>> {
+    let config: Config = serde_yaml::from_str(config_str)?;
     Ok(config)
 }

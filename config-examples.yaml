@@ -1,0 +1,47 @@
+# Example configurations for Wololo Wake-on-LAN
+
+# Configuration 1: Fast sync (every 15 seconds)
+server:
+  ip: "0.0.0.0"
+  port: 3000
+  external_url: "http://localhost:3000"
+
+sync:
+  enabled: true
+  interval_seconds: 15  # Fast refresh for development/testing
+
+devices:
+  - name: "Gaming PC"
+    mac_address: "AA:BB:CC:DD:EE:FF"
+    ip_address: "192.168.1.100"
+
+---
+# Configuration 2: Moderate sync (every 60 seconds)
+server:
+  ip: "0.0.0.0"
+  port: 3000
+  external_url: "http://localhost:3000"
+
+sync:
+  enabled: true
+  interval_seconds: 60  # Standard refresh rate
+
+devices:
+  - name: "Home Server"
+    mac_address: "11:22:33:44:55:66"
+    ip_address: "192.168.1.50"
+
+---
+# Configuration 3: Sync disabled (manual only)
+server:
+  ip: "0.0.0.0"
+  port: 3000
+  external_url: "http://localhost:3000"
+
+sync:
+  enabled: false  # No automatic refresh
+
+devices:
+  - name: "Backup Server"
+    mac_address: "77:88:99:AA:BB:CC"
+    ip_address: "192.168.1.200"
