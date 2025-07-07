@@ -1,0 +1,43 @@
+# Build artifacts
+target/
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Documentation
+*.md
+docs/
+
+# Configuration
+config.yaml
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tests
+tests/
+TESTING.md
+
+# CI/CD
+.github/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
