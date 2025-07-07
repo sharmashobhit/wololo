@@ -6,98 +6,164 @@
     <title>Device Discovery - Wololo</title>
     <script src="/assets/htmx.min.js"></script>
     <script src="/assets/tailwind.min.js"></script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+      
+      body { font-family: 'Inter', sans-serif; }
+      
+      .glass {
+        background: rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+      }
+      
+      .gradient-bg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+      
+      .card-hover {
+        transition: all 0.3s ease;
+      }
+      
+      .card-hover:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      }
+      
+      .pulse-glow {
+        animation: pulse-glow 2s ease-in-out infinite alternate;
+      }
+      
+      @keyframes pulse-glow {
+        from { box-shadow: 0 0 20px rgba(102, 126, 234, 0.3); }
+        to { box-shadow: 0 0 30px rgba(102, 126, 234, 0.6); }
+      }
+    </style>
   </head>
-  <body class="bg-gray-50 text-gray-800 font-sans min-h-screen">
-    <div class="container mx-auto px-4 py-8 max-w-6xl">
-      <!-- Header -->
-      <div class="text-center mb-8">
-        <h1 class="text-5xl font-bold mb-2 text-blue-600">wololo</h1>
-        <p class="text-gray-600">Network Device Discovery</p>
-      </div>
-
-      <!-- Navigation -->
-      <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
-        <nav class="flex items-center justify-between">
-          <div class="flex space-x-4">
-            <a href="/" class="px-3 py-2 text-gray-600 hover:text-blue-600 transition duration-150">
-              <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-              </svg>
-              Home
-            </a>
-            <span class="px-3 py-2 text-blue-600 font-medium border-b-2 border-blue-600">
-              <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-              </svg>
-              Discovery
-            </span>
+  <body class="min-h-screen gradient-bg">
+    <div class="min-h-screen py-6 px-4 sm:py-8">
+      <div class="container mx-auto max-w-6xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+          <div class="inline-block p-4 glass rounded-2xl mb-6 pulse-glow">
+            <h1 class="text-5xl sm:text-6xl font-bold text-white mb-2">
+              <span class="bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-transparent">
+                wololo
+              </span>
+            </h1>
           </div>
-        </nav>
-      </div>
-
-      <!-- Discovery Section -->
-      <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
-        <div class="flex justify-between items-center mb-6">
-          <div>
-            <h2 class="text-2xl font-semibold text-gray-800">Network Discovery</h2>
-            <p class="text-sm text-gray-600 mt-1">Scan your network to discover devices and generate configuration</p>
-          </div>
-          <button 
-            id="scan-button"
-            hx-post="/discovery/scan" 
-            hx-target="#discovery-results" 
-            hx-swap="innerHTML"
-            hx-indicator="#scan-loading"
-            class="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md shadow-sm transition duration-150 ease-in-out flex items-center">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-            Start Network Scan
-          </button>
+          <p class="text-white/80 text-lg font-light">Network Device Discovery</p>
         </div>
 
-        <div id="scan-loading" class="htmx-indicator text-center py-8">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
-          <p class="text-gray-600 mt-4">Scanning network for devices...</p>
-          <p class="text-sm text-gray-500 mt-1">This may take 30-60 seconds</p>
-        </div>
-
-        <div id="discovery-results">
-          <!-- Discovery results will be loaded here -->
-          <div class="text-center py-12 text-gray-500">
-            <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-            <h3 class="text-lg font-medium mb-2">Ready to Discover</h3>
-            <p>Click "Start Network Scan" to discover devices on your network</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Current Configuration -->
-      <div class="bg-white rounded-lg shadow-lg p-6">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-xl font-semibold text-gray-800">Current Configuration</h3>
-          <span class="text-sm text-gray-500">{{device_count}} devices configured</span>
-        </div>
-        
-        {{#if devices}}
-        <div class="grid gap-3">
-          {{#each devices}}
-          <div class="bg-gray-50 rounded-lg p-3 flex justify-between items-center">
-            <div>
-              <span class="font-medium text-gray-800">{{this.name}}</span>
-              <span class="text-sm text-gray-600 ml-2">{{this.ip_address}}</span>
+        <!-- Navigation -->
+        <div class="glass rounded-2xl p-6 mb-8">
+          <nav class="flex items-center justify-center">
+            <div class="flex space-x-2 bg-white/10 rounded-xl p-1">
+              <a href="/" class="px-4 sm:px-6 py-3 text-white/70 hover:text-white hover:bg-white/10 font-medium rounded-lg transition-all duration-200 flex items-center space-x-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                </svg>
+                <span>Dashboard</span>
+              </a>
+              <span class="px-4 sm:px-6 py-3 bg-white/20 text-white font-medium rounded-lg flex items-center space-x-2 backdrop-blur-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <span>Discovery</span>
+              </span>
             </div>
-            <span class="text-xs font-mono text-gray-500">{{this.mac_address}}</span>
+          </nav>
+        </div>
+
+        <!-- Discovery Section -->
+        <div class="glass rounded-2xl p-6 sm:p-8 mb-8 card-hover">
+          <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8">
+            <div class="flex-1">
+              <h2 class="text-2xl sm:text-3xl font-bold text-white mb-2">Network Discovery</h2>
+              <p class="text-white/80">Scan your network to discover devices and generate configuration</p>
+            </div>
+            <div class="flex-shrink-0">
+              <button 
+                id="scan-button"
+                hx-post="/discovery/scan" 
+                hx-target="#discovery-results" 
+                hx-swap="innerHTML"
+                hx-indicator="#scan-loading"
+                class="group bg-emerald-500/20 hover:bg-emerald-500/30 backdrop-blur-sm text-white font-semibold py-4 px-6 sm:px-8 rounded-xl transition-all duration-200 flex items-center space-x-3 hover:scale-105 w-full sm:w-auto justify-center">
+                <svg class="w-6 h-6 group-hover:rotate-180 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <span>Start Network Scan</span>
+              </button>
+            </div>
           </div>
-          {{/each}}
+
+          <div id="scan-loading" class="htmx-indicator text-center py-12 sm:py-16">
+            <div class="relative inline-block">
+              <div class="animate-spin rounded-full h-16 w-16 border-4 border-white/20 border-t-emerald-400 mx-auto"></div>
+              <div class="absolute inset-0 rounded-full h-16 w-16 border-4 border-transparent border-t-emerald-200 animate-ping"></div>
+            </div>
+            <p class="text-white/90 mt-6 text-lg sm:text-xl font-medium">Scanning network for devices...</p>
+            <p class="text-white/60 mt-2 text-sm sm:text-base">This may take 30-60 seconds</p>
+          </div>
+
+          <div id="discovery-results">
+            <!-- Discovery results will be loaded here -->
+            <div class="text-center py-12 sm:py-16">
+              <div class="bg-white/10 rounded-full p-6 sm:p-8 w-24 h-24 sm:w-32 sm:h-32 mx-auto mb-6 sm:mb-8 backdrop-blur-sm">
+                <svg class="w-12 h-12 sm:w-16 sm:h-16 text-white/60 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+              </div>
+              <h3 class="text-xl sm:text-2xl font-bold text-white mb-3">Ready to Discover</h3>
+              <p class="text-white/70 max-w-md mx-auto text-sm sm:text-base">Click "Start Network Scan" to discover devices on your network and automatically generate configuration</p>
+            </div>
+          </div>
         </div>
-        {{else}}
-        <div class="text-center py-6 text-gray-500">
-          <p>No devices currently configured</p>
+
+        <!-- Current Configuration -->
+        <div class="glass rounded-2xl p-6 sm:p-8 mb-8 card-hover">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <h3 class="text-xl sm:text-2xl font-bold text-white">Current Configuration</h3>
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+              <span class="text-white/80 text-sm">{{device_count}} devices configured</span>
+            </div>
+          </div>
+          
+          {{#if devices}}
+          <div class="grid gap-4">
+            {{#each devices}}
+            <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:bg-white/15 transition-all duration-200">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div class="flex items-center space-x-3">
+                  <div class="bg-white/10 p-2 rounded-lg backdrop-blur-sm">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <span class="font-semibold text-white">{{this.name}}</span>
+                    <p class="text-white/70 text-sm">{{this.ip_address}}</p>
+                  </div>
+                </div>
+                <span class="text-xs font-mono text-white/60 bg-white/5 px-3 py-1 rounded-lg">{{this.mac_address}}</span>
+              </div>
+            </div>
+            {{/each}}
+          </div>
+          {{else}}
+          <div class="text-center py-12">
+            <div class="bg-white/5 rounded-full p-6 w-20 h-20 mx-auto mb-4 backdrop-blur-sm">
+              <svg class="w-8 h-8 text-white/40 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+              </svg>
+            </div>
+            <p class="text-white/70">No devices currently configured</p>
+            <p class="text-white/50 text-sm mt-1">Use network discovery to find and add devices</p>
+          </div>
+          {{/if}}
         </div>
-        {{/if}}
       </div>
     </div>
   </body>

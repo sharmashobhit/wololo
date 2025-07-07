@@ -25,6 +25,9 @@ use handlebars::Handlebars;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use serde_urlencoded;
+use std::fs;
+use serde_yml;
 
 // AppState definition for routes module
 #[derive(Clone)]
@@ -167,61 +170,82 @@ async fn refresh_all_handler(State(app_state): State<AppState>) -> impl IntoResp
     
     if app_state.config.devices.is_empty() {
         devices_html = r#"
-        <div class="text-center py-8">
-            <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-            </svg>
-            <p class="text-gray-500 text-lg">No devices configured</p>
-            <p class="text-gray-400 text-sm mt-1">Add devices to your config.yaml file</p>
+        <div class="text-center py-16">
+            <div class="bg-white/10 rounded-full p-6 w-24 h-24 mx-auto mb-6 backdrop-blur-sm">
+                <svg class="w-12 h-12 text-white/60 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                </svg>
+            </div>
+            <h3 class="text-xl font-semibold text-white mb-2">No devices configured</h3>
+            <p class="text-white/70 max-w-sm mx-auto">Start by adding devices to your config.yaml file or discover devices on your network</p>
+            <a href="/discovery" class="inline-flex items-center space-x-2 mt-6 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-medium py-3 px-6 rounded-xl transition-all duration-200 hover:scale-105">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <span>Discover Devices</span>
+            </a>
         </div>
         "#.to_string();
     } else {
-        devices_html.push_str("<div class=\"grid gap-4\">");
+        devices_html.push_str("<div class=\"grid gap-6\">");
         
         for (index, device) in app_state.config.devices.iter().enumerate() {
             let status = ping_device(&device.ip_address).await;
-            let (status_class, status_text, icon) = match status {
-                DeviceStatus::Online => ("bg-green-100 text-green-800", "Online", "🟢"),
-                DeviceStatus::Offline => ("bg-red-100 text-red-800", "Offline", "🔴"),
-                DeviceStatus::Unreachable => ("bg-yellow-100 text-yellow-800", "Unreachable", "🟡"),
+            let (status_class, status_text, _icon, status_bg) = match status {
+                DeviceStatus::Online => ("text-green-300", "Online", "●", "bg-green-500/20"),
+                DeviceStatus::Offline => ("text-red-300", "Offline", "●", "bg-red-500/20"),
+                DeviceStatus::Unreachable => ("text-yellow-300", "Unreachable", "●", "bg-yellow-500/20"),
             };
             
             let device_html = format!(
-                "<div class=\"bg-gray-50 rounded-lg border border-gray-200 p-4 hover:shadow-md transition duration-200 ease-in-out\">\
-                    <div class=\"flex items-center justify-between\">\
+                "<div class=\"bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl\">\
+                    <div class=\"flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0\">\
                         <div class=\"flex-1\">\
-                            <div class=\"flex items-center gap-3 mb-2\">\
-                                <h3 class=\"font-semibold text-gray-800 text-lg\">{}</h3>\
-                                <div id=\"status-{}\" class=\"flex items-center\">\
-                                    <span class=\"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {}\">\
-                                        <span class=\"mr-1\">{}</span>\
-                                        {}\
-                                    </span>\
+                            <div class=\"flex items-center gap-4 mb-4\">\
+                                <div class=\"bg-white/10 p-3 rounded-xl backdrop-blur-sm\">\
+                                    <svg class=\"w-6 h-6 text-white\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">\
+                                        <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z\"></path>\
+                                    </svg>\
+                                </div>\
+                                <div>\
+                                    <h3 class=\"text-xl font-bold text-white mb-1\">{}</h3>\
+                                    <div id=\"status-{}\" class=\"flex items-center space-x-2\">\
+                                        <div class=\"flex items-center space-x-2 px-3 py-1 rounded-full {} backdrop-blur-sm\">\
+                                            <span class=\"w-2 h-2 rounded-full {} animate-pulse\"></span>\
+                                            <span class=\"text-sm font-medium text-white\">{}</span>\
+                                        </div>\
+                                    </div>\
                                 </div>\
                             </div>\
-                            <div class=\"text-sm text-gray-600 space-y-1\">\
-                                <p><span class=\"font-medium\">IP:</span> {}</p>\
-                                <p><span class=\"font-medium\">MAC:</span> {}</p>\
+                            <div class=\"grid grid-cols-1 md:grid-cols-2 gap-3 text-sm\">\
+                                <div class=\"bg-white/5 rounded-lg p-3 backdrop-blur-sm\">\
+                                    <span class=\"text-white/60 font-medium\">IP Address</span>\
+                                    <p class=\"text-white font-mono\">{}</p>\
+                                </div>\
+                                <div class=\"bg-white/5 rounded-lg p-3 backdrop-blur-sm\">\
+                                    <span class=\"text-white/60 font-medium\">MAC Address</span>\
+                                    <p class=\"text-white font-mono text-sm\">{}</p>\
+                                </div>\
                             </div>\
                         </div>\
-                        <div class=\"flex flex-col gap-2 items-end\">\
-                            <button hx-get=\"/ping/{}\" hx-target=\"#status-{}\" hx-swap=\"innerHTML\" class=\"bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-3 rounded-md shadow-sm transition duration-150 ease-in-out flex items-center\">\
-                                <svg class=\"w-4 h-4 mr-1\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">\
+                        <div class=\"flex flex-row lg:flex-col gap-3 lg:items-end\">\
+                            <button hx-get=\"/ping/{}\" hx-target=\"#status-{}\" hx-swap=\"innerHTML\" class=\"group flex-1 lg:flex-none bg-blue-500/20 hover:bg-blue-500/30 backdrop-blur-sm text-white font-medium py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 hover:scale-105\">\
+                                <svg class=\"w-4 h-4 group-hover:scale-110 transition-transform\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">\
                                     <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z\"></path>\
                                 </svg>\
-                                Check Status\
+                                <span>Check</span>\
                             </button>\
-                            <button hx-post=\"/wake/{}\" hx-target=\"#wake-response-{}\" hx-swap=\"innerHTML\" class=\"bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-3 rounded-md shadow-sm transition duration-150 ease-in-out flex items-center\">\
-                                <svg class=\"w-4 h-4 mr-1\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">\
+                            <button hx-post=\"/wake/{}\" hx-target=\"#wake-response-{}\" hx-swap=\"innerHTML\" class=\"group flex-1 lg:flex-none bg-emerald-500/20 hover:bg-emerald-500/30 backdrop-blur-sm text-white font-medium py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 hover:scale-105\">\
+                                <svg class=\"w-4 h-4 group-hover:scale-110 transition-transform\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">\
                                     <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M13 10V3L4 14h7v7l9-11h-7z\"></path>\
                                 </svg>\
-                                Wake Up\
+                                <span>Wake</span>\
                             </button>\
-                            <div id=\"wake-response-{}\" class=\"text-sm\"></div>\
                         </div>\
                     </div>\
+                    <div id=\"wake-response-{}\" class=\"mt-4 text-sm\"></div>\
                 </div>",
-                device.name, index, status_class, icon, status_text,
+                device.name, index, status_bg, status_class, status_text,
                 device.ip_address, device.mac_address,
                 device.name, index, device.name, index, index
             );
@@ -314,11 +338,11 @@ async fn discovery_scan_handler(State(app_state): State<AppState>) -> impl IntoR
                 <div class=\"mb-6\">\
                     <div class=\"flex justify-between items-center mb-4\">\
                         <h3 class=\"text-lg font-semibold text-gray-800\">Discovered Devices ({})</h3>\
-                        <button type=\"submit\" hx-post=\"/discovery/generate-config\" hx-include=\"#discovery-form\" hx-target=\"#config-download\" class=\"bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md shadow-sm transition duration-150 ease-in-out flex items-center\">\
+                        <button type=\"submit\" hx-post=\"/discovery/generate-config\" hx-include=\"#discovery-form\" class=\"bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md shadow-sm transition duration-150 ease-in-out flex items-center\">\
                             <svg class=\"w-4 h-4 mr-2\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">\
-                                <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z\"></path>\
+                                <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M12 10v6m0 0l-3-3m3 3l3-3m-8 5h16l-1-1V9l-1-1H4l-1 1v10l1 1z\"></path>\
                             </svg>\
-                            Generate Config\
+                            Generate &amp; Download Config\
                         </button>\
                     </div>",
             discovered_devices.len()
@@ -369,7 +393,6 @@ async fn discovery_scan_handler(State(app_state): State<AppState>) -> impl IntoR
         }
         
         devices_html.push_str("</div>");
-        devices_html.push_str("<div id=\"config-download\" class=\"mt-6\"></div>");
         devices_html.push_str("</div>");
         devices_html.push_str("</form>");
     }
@@ -377,33 +400,40 @@ async fn discovery_scan_handler(State(app_state): State<AppState>) -> impl IntoR
     Html(devices_html).into_response()
 }
 
-// Form data structure for device selection
-#[derive(Debug, serde::Deserialize)]
-pub struct DeviceSelectionForm {
-    pub selected_devices: Option<Vec<String>>,
-}
-
 // Config generation handler
 async fn generate_config_handler(
     State(app_state): State<AppState>,
-    Form(form_data): Form<DeviceSelectionForm>,
+    body: String,
 ) -> impl IntoResponse {
     println!("Generating config with selected devices...");
-    
+
+    let selected_ips: Vec<String> = serde_urlencoded::from_str::<Vec<(String, String)>>(&body)
+        .unwrap_or_default()
+        .into_iter()
+        .filter_map(|(key, value)| {
+            if key == "selected_devices" {
+                Some(value)
+            } else {
+                None
+            }
+        })
+        .collect();
+
     // Get the discovered devices from storage
     let discovered_devices = {
         let storage = app_state.discovered_devices.lock().await;
         storage.get("latest_scan").cloned().unwrap_or_default()
     };
     
-    // Parse selected device IPs and find corresponding devices
-    let selected_ips = form_data.selected_devices.unwrap_or_default();
     let selected_devices: Vec<DiscoveredDevice> = discovered_devices
         .into_iter()
         .filter(|device| selected_ips.contains(&device.ip_address))
         .collect();
     
-    println!("Selected {} devices for config generation", selected_devices.len());
+    println!(
+        "Selected {} devices for config generation",
+        selected_devices.len()
+    );
     
     let config_content = generate_config_yaml(&app_state.config, &selected_devices).await;
     
@@ -412,33 +442,10 @@ async fn generate_config_handler(
         let mut stored_config = GENERATED_CONFIG.lock().await;
         *stored_config = Some(config_content.clone());
     }
-    
-    let download_html = format!(
-        r#"<div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h4 class="font-medium text-blue-800">Configuration Generated</h4>
-                    <p class="text-sm text-blue-600 mt-1">Updated config.yaml ready for download</p>
-                </div>
-                <a 
-                    href="/discovery/download-config" 
-                    download="config.yaml"
-                    class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md shadow-sm transition duration-150 ease-in-out flex items-center">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m-8 5h16l-1-1V9l-1-1H4l-1 1v10l1 1z"></path>
-                    </svg>
-                    Download Config
-                </a>
-            </div>
-            <details class="mt-4">
-                <summary class="cursor-pointer text-sm text-blue-600 hover:text-blue-800">Preview Configuration</summary>
-                <pre class="mt-2 p-3 bg-gray-100 rounded text-xs overflow-x-auto"><code>{}</code></pre>
-            </details>
-        </div>"#,
-        html_escape::encode_text(&config_content)
-    );
-    
-    Html(download_html).into_response()
+
+    let mut headers = HeaderMap::new();
+    headers.insert("HX-Redirect", "/discovery/download-config".parse().unwrap());
+    (headers, "").into_response()
 }
 
 // Store the generated config temporarily
@@ -588,53 +595,56 @@ async fn get_mac_address(ip: &str) -> Option<String> {
 }
 
 // Generate config YAML function
-pub async fn generate_config_yaml(current_config: &crate::config::Config, selected_devices: &[DiscoveredDevice]) -> String {
-    let mut config_content = format!(
-        "server:\n  ip: \"{}\"\n  port: {}\n  external_url: \"{}\"\n\n",
-        current_config.server.ip,
-        current_config.server.port,
-        current_config.server.external_url
-    );
-    
-    config_content.push_str(&format!(
-        "sync:\n  enabled: {}\n  interval_seconds: {}  # Auto-refresh device status every {} seconds\n\n",
-        current_config.sync.enabled,
-        current_config.sync.interval_seconds,
-        current_config.sync.interval_seconds
-    ));
-    
-    config_content.push_str("devices:\n");
-    
-    // Add existing devices first
-    for device in &current_config.devices {
-        config_content.push_str(&format!(
-            "  - name: \"{}\"\n    mac_address: \"{}\"\n    ip_address: \"{}\"\n",
-            device.name, device.mac_address, device.ip_address
-        ));
-    }
-    
-    // Add selected discovered devices
-    for device in selected_devices {
-        let default_name = format!("Device-{}", device.ip_address);
-        let device_name = device.hostname.as_deref().unwrap_or(&default_name);
-        let mac_address = device.mac_address.as_deref().unwrap_or("XX:XX:XX:XX:XX:XX");
-        
-        // Only add if we have a MAC address (required for WoL)
-        if device.mac_address.is_some() {
-            config_content.push_str(&format!(
-                "  - name: \"{}\"\n    mac_address: \"{}\"\n    ip_address: \"{}\"\n",
-                device_name, mac_address, device.ip_address
-            ));
-        } else {
-            // Add as a comment if no MAC address available
-            config_content.push_str(&format!(
-                "  # - name: \"{}\"  # No MAC address found\n  #   mac_address: \"XX:XX:XX:XX:XX:XX\"\n  #   ip_address: \"{}\"\n",
-                device_name, device.ip_address
-            ));
+pub async fn generate_config_yaml(
+    current_config: &crate::config::Config,
+    selected_devices: &[DiscoveredDevice],
+) -> String {
+    let config_path = "config.yaml";
+    let config_str = fs::read_to_string(config_path).unwrap_or_else(|_| {
+        // Fallback to a default structure if config.yaml doesn't exist
+        "server: {}\nsync: {}\ndevices: []".to_string()
+    });
+
+    let mut config_value: serde_yml::Value =
+        serde_yml::from_str(&config_str).unwrap_or(serde_yml::Value::Mapping(Default::default()));
+
+    if let serde_yml::Value::Mapping(mapping) = &mut config_value {
+        let devices = mapping
+            .entry(serde_yml::Value::String("devices".to_string()))
+            .or_insert_with(|| serde_yml::Value::Sequence(Vec::new()))
+            .as_sequence_mut()
+            .unwrap();
+
+        let existing_macs: std::collections::HashSet<String> = current_config
+            .devices
+            .iter()
+            .map(|d| d.mac_address.clone())
+            .collect();
+
+        for device in selected_devices {
+            if let Some(mac_address) = &device.mac_address {
+                if !existing_macs.contains(mac_address) {
+                    let mut device_map = serde_yml::Mapping::new();
+                    let default_name = format!("New-Device-{}", mac_address.replace(":", ""));
+                    device_map.insert(
+                        serde_yml::Value::String("name".to_string()),
+                        serde_yml::Value::String(device.hostname.as_deref().unwrap_or(&default_name).to_string()),
+                    );
+                    device_map.insert(
+                        serde_yml::Value::String("mac_address".to_string()),
+                        serde_yml::Value::String(mac_address.clone()),
+                    );
+                    device_map.insert(
+                        serde_yml::Value::String("ip_address".to_string()),
+                        serde_yml::Value::String(device.ip_address.clone()),
+                    );
+                    devices.push(serde_yml::Value::Mapping(device_map));
+                }
+            }
         }
     }
-    
-    config_content
+
+    serde_yml::to_string(&config_value).unwrap_or_default()
 }
 
 // Function to create and configure the Axum router

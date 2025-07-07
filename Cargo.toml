@@ -21,6 +21,8 @@ ipnet = "2.10.1"
 futures = "0.3"
 regex = "1"
 html-escape = "0.2"
+serde_urlencoded = "0.7"
+serde_yml = "0.0.12"
 
 [dev-dependencies]
 tokio-test = "0.4"
