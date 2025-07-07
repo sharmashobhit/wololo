@@ -2,41 +2,42 @@ name: Test Container Build
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   test-build:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    - name: Build Docker image
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        push: false
-        tags: wololo:test
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          load: true
+          tags: wololo:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-    - name: Test container
-      run: |
-        # Start the container
-        docker run -d --name wololo-test -p 3000:3000 wololo:test
-        
-        # Wait for the container to start
-        sleep 10
-        
-        # Test health endpoint
-        curl -f http://localhost:3000/hello || exit 1
-        
-        # Stop the container
-        docker stop wololo-test
-        docker rm wololo-test
+      - name: Test container
+        run: |
+          # Start the container
+          docker run -d --name wololo-test -p 3000:3000 wololo:test
+
+          # Wait for the container to start
+          sleep 10
+
+          # Test health endpoint
+          curl -f http://localhost:3000/hello || exit 1
+
+          # Stop the container
+          docker stop wololo-test
+          docker rm wololo-test
