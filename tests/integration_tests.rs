@@ -1,9 +1,9 @@
-use wololo::*;
 use axum::{
     body::Body,
-    http::{Request, Method},
+    http::{Method, Request},
 };
 use tower::ServiceExt;
+use wololo::*;
 
 #[tokio::test]
 #[cfg(feature = "e2e-tests")]
@@ -19,23 +19,18 @@ async fn test_full_application_flow() {
             enabled: true,
             interval_seconds: 30,
         },
-        devices: vec![
-            Device {
-                name: "Test PC".to_string(),
-                mac_address: "AA:BB:CC:DD:EE:FF".to_string(),
-                ip_address: "192.168.1.100".to_string(),
-            },
-        ],
+        devices: vec![Device {
+            name: "Test PC".to_string(),
+            mac_address: "AA:BB:CC:DD:EE:FF".to_string(),
+            ip_address: "192.168.1.100".to_string(),
+        }],
     };
 
     let app_state = AppState::new_for_test(config);
     let app = routes::app_router(app_state);
 
     // Test 1: Access main page
-    let request = Request::builder()
-        .uri("/")
-        .body(Body::empty())
-        .unwrap();
+    let request = Request::builder().uri("/").body(Body::empty()).unwrap();
     let response = app.clone().oneshot(request).await.unwrap();
     assert_eq!(response.status(), axum::http::StatusCode::OK);
 
@@ -99,7 +94,7 @@ async fn test_discovery_workflow() {
         .unwrap();
     let response = app.clone().oneshot(request).await.unwrap();
     assert_eq!(response.status(), axum::http::StatusCode::OK);
-    
+
     // Verify response headers
     let headers = response.headers();
     assert_eq!(headers.get("content-type").unwrap(), "application/x-yaml");
@@ -167,14 +162,12 @@ async fn test_app_state_management() {
     assert_eq!(app_state.config.devices[1].name, "Device 2");
 
     // Test discovered devices storage
-    let discovered_devices = vec![
-        routes::DiscoveredDevice {
-            ip_address: "192.168.1.100".to_string(),
-            mac_address: Some("FF:EE:DD:CC:BB:AA".to_string()),
-            hostname: Some("discovered-device".to_string()),
-            status: "Online".to_string(),
-        },
-    ];
+    let discovered_devices = vec![routes::DiscoveredDevice {
+        ip_address: "192.168.1.100".to_string(),
+        mac_address: Some("FF:EE:DD:CC:BB:AA".to_string()),
+        hostname: Some("discovered-device".to_string()),
+        status: "Online".to_string(),
+    }];
 
     {
         let mut storage = app_state.discovered_devices.lock().await;
@@ -196,13 +189,11 @@ async fn test_concurrent_requests() {
     let app_state = AppState::new_for_test(Config {
         server: ServerConfig::default(),
         sync: SyncConfig::default(),
-        devices: vec![
-            Device {
-                name: "Test Device".to_string(),
-                mac_address: "AA:BB:CC:DD:EE:FF".to_string(),
-                ip_address: "192.168.1.100".to_string(),
-            },
-        ],
+        devices: vec![Device {
+            name: "Test Device".to_string(),
+            mac_address: "AA:BB:CC:DD:EE:FF".to_string(),
+            ip_address: "192.168.1.100".to_string(),
+        }],
     });
 
     // Create multiple apps to simulate concurrent access
@@ -212,8 +203,14 @@ async fn test_concurrent_requests() {
 
     // Make concurrent requests
     let request1 = Request::builder().uri("/").body(Body::empty()).unwrap();
-    let request2 = Request::builder().uri("/discovery").body(Body::empty()).unwrap();
-    let request3 = Request::builder().uri("/ping/Test%20Device").body(Body::empty()).unwrap();
+    let request2 = Request::builder()
+        .uri("/discovery")
+        .body(Body::empty())
+        .unwrap();
+    let request3 = Request::builder()
+        .uri("/ping/Test%20Device")
+        .body(Body::empty())
+        .unwrap();
 
     let (response1, response2, response3) = tokio::join!(
         app1.oneshot(request1),

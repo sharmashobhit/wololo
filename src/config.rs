@@ -32,7 +32,7 @@ fn default_sync_interval() -> u32 {
 }
 
 // Struct for server configuration
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct ServerConfig {
     #[serde(default = "default_ip")] // Added default for ip
     pub ip: String,
@@ -55,7 +55,7 @@ impl Default for ServerConfig {
 }
 
 // Struct for sync configuration
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct SyncConfig {
     #[serde(default = "default_sync_enabled")]
     pub enabled: bool,
@@ -74,7 +74,7 @@ impl Default for SyncConfig {
 }
 
 // Main configuration struct
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct Config {
     #[serde(default)] // If the whole server section is missing, use ServerConfig::default()
     pub server: ServerConfig,
@@ -87,11 +87,5 @@ pub struct Config {
 pub fn load_config() -> Result<Config, Box<dyn std::error::Error>> {
     let config_str = fs::read_to_string("config.yaml")?;
     let config: Config = serde_yaml::from_str(&config_str)?;
-    Ok(config)
-}
-
-// Function to load config from string (for testing)
-pub fn load_config_from_str(config_str: &str) -> Result<Config, Box<dyn std::error::Error>> {
-    let config: Config = serde_yaml::from_str(config_str)?;
     Ok(config)
 }

@@ -14,12 +14,14 @@ impl AppState {
         use std::collections::HashMap;
         use std::sync::Arc;
         use tokio::sync::Mutex;
-        
+
         let mut hb = Handlebars::new();
         // Register minimal templates for testing
-        hb.register_template_string("index", "test template").unwrap();
-        hb.register_template_string("discovery", "discovery template").unwrap();
-        
+        hb.register_template_string("index", "test template")
+            .unwrap();
+        hb.register_template_string("discovery", "discovery template")
+            .unwrap();
+
         Self {
             config,
             handlebars: Arc::new(hb),

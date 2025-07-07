@@ -1,11 +1,11 @@
 use handlebars::Handlebars;
 use rust_embed::RustEmbed;
+use std::collections::HashMap;
 use std::net::{IpAddr, SocketAddr};
 use std::str::FromStr;
 use std::sync::Arc; // Added for Arc
-use std::collections::HashMap;
-use tokio::sync::Mutex;
-use tokio::net::TcpListener; // Required for IpAddr::from_str // Added for Handlebars
+use tokio::net::TcpListener;
+use tokio::sync::Mutex; // Required for IpAddr::from_str // Added for Handlebars
 
 mod config;
 use config::load_config; // Ensure Config is imported
@@ -55,14 +55,17 @@ async fn main() {
             return;
         }
     }
-    
+
     // Register the discovery.html template
     match FEAssets::get("discovery.html") {
         Some(file) => {
             let template_content =
                 std::str::from_utf8(&file.data).expect("discovery.html is not valid UTF-8");
             if let Err(e) = hb.register_template_string("discovery", template_content) {
-                eprintln!("Failed to register discovery.html template: {}. Exiting.", e);
+                eprintln!(
+                    "Failed to register discovery.html template: {}. Exiting.",
+                    e
+                );
                 return;
             }
         }
@@ -97,7 +100,7 @@ async fn main() {
     println!("Listening on http://{}", addr);
 
     let mut app = app_router(app_state); // Pass the combined app_state
-    
+
     // Add assets service to the router
     app = app.nest_service("/assets", axum_embed::ServeEmbed::<Assets>::new());
 

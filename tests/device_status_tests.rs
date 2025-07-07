@@ -48,7 +48,7 @@ fn test_mac_address_formats() {
 fn test_ip_address_formats() {
     let valid_ip_formats = vec![
         "192.168.1.1",
-        "10.0.0.1", 
+        "10.0.0.1",
         "172.16.0.1",
         "127.0.0.1",
         "0.0.0.0",
@@ -78,7 +78,7 @@ fn test_device_clone() {
     assert_eq!(device1.name, device2.name);
     assert_eq!(device1.mac_address, device2.mac_address);
     assert_eq!(device1.ip_address, device2.ip_address);
-    
+
     // Ensure they are separate objects
     assert_eq!(device1.name, device2.name);
     // Modify one doesn't affect the other (test would fail if they shared memory)
@@ -94,7 +94,10 @@ fn test_discovered_device_with_all_fields() {
     };
 
     assert_eq!(discovered.ip_address, "192.168.1.100");
-    assert_eq!(discovered.mac_address, Some("AA:BB:CC:DD:EE:FF".to_string()));
+    assert_eq!(
+        discovered.mac_address,
+        Some("AA:BB:CC:DD:EE:FF".to_string())
+    );
     assert_eq!(discovered.hostname, Some("test-device.local".to_string()));
     assert_eq!(discovered.status, "Online");
 }
@@ -123,11 +126,11 @@ fn test_device_json_serialization() {
     };
 
     let json = serde_json::to_string(&device).unwrap();
-    
+
     assert!(json.contains("JSON Test Device"));
     assert!(json.contains("AA:BB:CC:DD:EE:FF"));
     assert!(json.contains("192.168.1.100"));
-    
+
     let deserialized: Device = serde_json::from_str(&json).unwrap();
     assert_eq!(device.name, deserialized.name);
     assert_eq!(device.mac_address, deserialized.mac_address);
@@ -143,11 +146,11 @@ fn test_device_yaml_serialization() {
     };
 
     let yaml = serde_yaml::to_string(&device).unwrap();
-    
+
     assert!(yaml.contains("YAML Test Device"));
     assert!(yaml.contains("11:22:33:44:55:66"));
     assert!(yaml.contains("10.0.0.1"));
-    
+
     let deserialized: Device = serde_yaml::from_str(&yaml).unwrap();
     assert_eq!(device.name, deserialized.name);
     assert_eq!(device.mac_address, deserialized.mac_address);
@@ -163,7 +166,7 @@ fn test_device_name_edge_cases() {
         "Device_with_underscores",
         "Device123",
         "🚀 Device with emoji",
-        "",  // Empty name
+        "", // Empty name
     ];
 
     for name in edge_cases {
@@ -172,7 +175,7 @@ fn test_device_name_edge_cases() {
             mac_address: "AA:BB:CC:DD:EE:FF".to_string(),
             ip_address: "192.168.1.1".to_string(),
         };
-        
+
         // Should be able to create and serialize
         let json = serde_json::to_string(&device).unwrap();
         let _deserialized: Device = serde_json::from_str(&json).unwrap();

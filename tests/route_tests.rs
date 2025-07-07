@@ -1,9 +1,9 @@
-use wololo::*;
 use axum::{
-    body::{Body, to_bytes},
-    http::{Request, StatusCode, Method},
+    body::{to_bytes, Body},
+    http::{Method, Request, StatusCode},
 };
-use tower::ServiceExt; // for `oneshot`
+use tower::ServiceExt;
+use wololo::*; // for `oneshot`
 
 // Helper function to create test app state
 fn create_test_app_state() -> AppState {
@@ -38,10 +38,7 @@ async fn test_root_route() {
     let app_state = create_test_app_state();
     let app = routes::app_router(app_state);
 
-    let request = Request::builder()
-        .uri("/")
-        .body(Body::empty())
-        .unwrap();
+    let request = Request::builder().uri("/").body(Body::empty()).unwrap();
 
     let response = app.oneshot(request).await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
@@ -59,7 +56,7 @@ async fn test_hello_route() {
 
     let response = app.oneshot(request).await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
-    
+
     let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let body_str = std::str::from_utf8(&body).unwrap();
     assert!(body_str.contains("Hello from Axum"));
@@ -91,10 +88,10 @@ async fn test_refresh_all_route() {
 
     let response = app.oneshot(request).await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
-    
+
     let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let body_str = std::str::from_utf8(&body).unwrap();
-    
+
     // Should contain device information
     assert!(body_str.contains("Test Device 1") || body_str.contains("Loading"));
 }
@@ -112,13 +109,13 @@ async fn test_wake_device_route_existing_device() {
         .unwrap();
 
     let response = app.oneshot(request).await.unwrap();
-    
+
     // Should return OK (even if WoL fails in test environment)
     assert_eq!(response.status(), StatusCode::OK);
-    
+
     let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let body_str = std::str::from_utf8(&body).unwrap();
-    
+
     // Should contain success or error message
     assert!(body_str.contains("Wake packet sent") || body_str.contains("Failed to wake"));
 }
@@ -135,12 +132,12 @@ async fn test_wake_device_route_nonexistent_device() {
         .unwrap();
 
     let response = app.oneshot(request).await.unwrap();
-    
+
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
-    
+
     let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let body_str = std::str::from_utf8(&body).unwrap();
-    
+
     assert!(body_str.contains("not found"));
 }
 
@@ -157,12 +154,16 @@ async fn test_ping_device_route_existing_device() {
 
     let response = app.oneshot(request).await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
-    
+
     let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let body_str = std::str::from_utf8(&body).unwrap();
-    
+
     // Should contain a status indicator
-    assert!(body_str.contains("Online") || body_str.contains("Offline") || body_str.contains("Unreachable"));
+    assert!(
+        body_str.contains("Online")
+            || body_str.contains("Offline")
+            || body_str.contains("Unreachable")
+    );
 }
 
 #[tokio::test]
@@ -177,10 +178,10 @@ async fn test_ping_device_route_nonexistent_device() {
 
     let response = app.oneshot(request).await.unwrap();
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
-    
+
     let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let body_str = std::str::from_utf8(&body).unwrap();
-    
+
     assert!(body_str.contains("not found"));
 }
 
@@ -198,10 +199,10 @@ async fn test_discovery_scan_route() {
 
     let response = app.oneshot(request).await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
-    
+
     let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let body_str = std::str::from_utf8(&body).unwrap();
-    
+
     // Should contain either discovered devices or no devices message
     assert!(body_str.contains("Discovered Devices") || body_str.contains("No devices discovered"));
 }

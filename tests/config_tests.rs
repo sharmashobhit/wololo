@@ -1,6 +1,6 @@
-use wololo::config::*;
-use tempfile::NamedTempFile;
 use std::io::Write;
+use tempfile::NamedTempFile;
+use wololo::config::*;
 
 #[test]
 fn test_default_server_config() {
@@ -40,18 +40,18 @@ devices:
 
     let mut temp_file = NamedTempFile::new().unwrap();
     temp_file.write_all(config_content.as_bytes()).unwrap();
-    
-    let config = load_config_from_str(config_content).unwrap();
-    
+
+    let config: Config = serde_yaml::from_str(config_content).unwrap();
+
     // Test server config
     assert_eq!(config.server.ip, "0.0.0.0");
     assert_eq!(config.server.port, 8080);
     assert_eq!(config.server.external_url, "http://example.com:8080");
-    
+
     // Test sync config
     assert_eq!(config.sync.enabled, false);
     assert_eq!(config.sync.interval_seconds, 120);
-    
+
     // Test devices
     assert_eq!(config.devices.len(), 2);
     assert_eq!(config.devices[0].name, "Test Device");
@@ -68,8 +68,8 @@ devices:
     ip_address: "192.168.1.100"
 "#;
 
-    let config = load_config_from_str(config_content).unwrap();
-    
+    let config: Config = serde_yaml::from_str(config_content).unwrap();
+
     // Should use defaults for missing sections
     assert_eq!(config.server.ip, "127.0.0.1");
     assert_eq!(config.server.port, 3000);
@@ -82,7 +82,7 @@ devices:
 fn test_load_nonexistent_config() {
     // Make sure the file doesn't exist
     std::fs::remove_file("config.yaml").ok();
-    
+
     let result = load_config();
     assert!(result.is_err());
 }
@@ -94,10 +94,10 @@ fn test_device_serialization() {
         mac_address: "AA:BB:CC:DD:EE:FF".to_string(),
         ip_address: "192.168.1.100".to_string(),
     };
-    
+
     let json = serde_json::to_string(&device).unwrap();
     let deserialized: Device = serde_json::from_str(&json).unwrap();
-    
+
     assert_eq!(device.name, deserialized.name);
     assert_eq!(device.mac_address, deserialized.mac_address);
     assert_eq!(device.ip_address, deserialized.ip_address);
@@ -118,8 +118,8 @@ sync:
 devices: []
 "#;
 
-    let config = load_config_from_str(config_content).unwrap();
-    
+    let config: Config = serde_yaml::from_str(config_content).unwrap();
+
     assert_eq!(config.devices.len(), 0);
     assert_eq!(config.server.ip, "localhost");
     assert_eq!(config.sync.interval_seconds, 30);
