@@ -5,83 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Axum + HTMX + Handlebars</title>
     <script src="/assets/htmx.min.js"></script>
+    <script src="/assets/tailwind.min.js"></script>
     <!-- You can link to a CSS file in your /assets folder here if you have one -->
     <!-- e.g., <link rel="stylesheet" href="/assets/styles.css"> -->
-    <style>
-      body {
-        font-family: sans-serif;
-        margin: 20px;
-        background-color: #f4f4f4;
-        color: #333;
-      }
-      h1,
-      h2 {
-        color: #2c3e50;
-      }
-      .container {
-        background-color: #fff;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
-      button {
-        padding: 10px 15px;
-        background-color: #3498db;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        margin-bottom: 20px;
-      }
-      button:hover {
-        background-color: #2980b9;
-      }
-      ul {
-        list-style-type: none;
-        padding: 0;
-      }
-      li {
-        background-color: #ecf0f1;
-        border: 1px solid #bdc3c7;
-        padding: 10px;
-        margin-bottom: 5px;
-        border-radius: 4px;
-      }
-      .device-name {
-        font-weight: bold;
-      }
-      .device-ip {
-        color: #7f8c8d;
-      }
-      .device-status {
-        font-style: italic;
-        color: #27ae60;
-      }
-      .no-devices {
-        color: #c0392b;
-      }
-    </style>
   </head>
-  <body>
-    <div class="container">
-      <h1>Axum + HTMX + Handlebars</h1>
-      <p>Server External URL: <strong>{{external_url}}</strong></p>
+  <body class="bg-gray-100 text-gray-800 font-sans">
+    <div class="container mx-auto px-4 py-8 max-w-2xl">
+      <h1 class="text-4xl font-bold mb-6 text-center text-blue-600">wololo</h1>
+      <p class="mb-4 text-center text-lg">Server External URL: <strong class="font-semibold text-indigo-700">{{external_url}}</strong></p>
 
-      <button hx-get="/hello" hx-target="#hello-response" hx-swap="innerHTML">
-        Say Hello
-      </button>
-      <div id="hello-response"></div>
+      <div class="text-center mb-6">
+        <button hx-get="/hello" hx-target="#hello-response" hx-swap="innerHTML" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow-md transition duration-150 ease-in-out">
+          Say Hello
+        </button>
+      </div>
+      <div id="hello-response" class="mt-4 p-4 border border-gray-300 rounded bg-white shadow"></div>
 
-      <h2>Registered Devices</h2>
+      <h2 class="text-3xl font-semibold mb-4 mt-8 text-blue-600">Registered Devices</h2>
       {{#if devices}}
-      <ul>
+      <ul class="list-none p-0 bg-white shadow rounded border border-gray-300">
         {{#each devices}}
-        <li>
-          <span class="device-name">{{this.name}}</span>
+        <li class="p-3 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition duration-150 ease-in-out">
+          <span class="device-name font-semibold text-gray-700">{{this.name}}</span>
           {{#if this.ip}} -
-          <span class="device-ip">IP: {{this.ip}}</span> {{/if}} {{#if
+          <span class="device-ip text-gray-600 text-sm">IP: {{this.ip}}</span> {{/if}} {{#if
           this.status}} -
-          <span class="device-status">Status: {{this.status}}</span>
+          <span class="device-status text-sm italic {{#if (eq this.status "Online")}}text-green-500{{else if (eq this.status "Offline")}}text-red-500{{else}}text-gray-500{{/if}}">Status: {{this.status}}</span>
           {{/if}}
           <!-- Add other device properties here as needed -->
           <!-- Example: {{#if this.mac}} - MAC: {{this.mac}} {{/if}} -->
@@ -89,7 +38,7 @@
         {{/each}}
       </ul>
       {{else}}
-      <p class="no-devices">No devices found or configured.</p>
+      <p class="no-devices text-gray-500 italic mt-4 p-4 bg-yellow-100 border border-yellow-300 rounded text-center">No devices found or configured.</p>
       {{/if}}
     </div>
   </body>
