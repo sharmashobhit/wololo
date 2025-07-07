@@ -1,6 +1,9 @@
 # Build artifacts
 target/
 
+# Cargo chef
+recipe.json
+
 # Git
 .git/
 .gitignore

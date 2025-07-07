@@ -1,24 +1,25 @@
 # Use the official Rust image as build environment
-FROM rust:1.83-slim AS builder
+FROM rust:1.83-slim AS chef
+RUN cargo install cargo-chef
+WORKDIR /app
 
+FROM chef AS planner
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
+
+FROM chef AS builder
 # Install required system dependencies
 RUN apt-get update && apt-get install -y \
     pkg-config \
     libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
-WORKDIR /app
+# Copy the recipe and build dependencies
+COPY --from=planner /app/recipe.json recipe.json
+RUN cargo chef cook --release --recipe-path recipe.json
 
-# Copy dependency files
-COPY Cargo.toml Cargo.lock ./
-
-# Copy source code
-COPY src ./src
-COPY frontend ./frontend
-COPY assets ./assets
-
-# Build the application
+# Copy source code and build
+COPY . .
 RUN cargo build --release
 
 # Use Ubuntu as runtime environment
