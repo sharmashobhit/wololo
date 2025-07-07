@@ -369,14 +369,25 @@ async fn discovery_scan_handler(State(app_state): State<AppState>) -> impl IntoR
         </div>
         "#.to_string();
     } else {
-        discovered_devices_html.push_str("<form id=\"discovery-form\" hx-post=\"/discovery/generate\" hx-target=\"#config-preview\" hx-swap=\"outerHTML\">");
+        discovered_devices_html.push_str("<form id=\"discovery-form\" hx-post=\"/discovery/generate-config\" hx-target=\"#config-preview\" hx-swap=\"outerHTML\">");
         discovered_devices_html.push_str("<div class=\"space-y-4\">");
+        
+        // Add select all/unselect all controls
+        discovered_devices_html.push_str(r#"
+        <div class="flex items-center justify-between p-4 bg-white/5 rounded-lg backdrop-blur-sm border border-white/10">
+            <div class="flex items-center space-x-3">
+                <input type="checkbox" id="select-all" class="form-checkbox h-5 w-5 bg-gray-900 border-gray-600 text-emerald-600 focus:ring-emerald-500 rounded">
+                <label for="select-all" class="text-white font-medium">Select All Devices</label>
+            </div>
+            <span class="text-white/60 text-sm" id="selection-count">0 devices selected</span>
+        </div>
+        "#);
 
         for device in discovered_devices {
             let device_html = format!(
                 r#"<div class="bg-gray-800 p-4 rounded-lg border border-gray-700 flex items-center justify-between">
                     <div class="flex items-center gap-4">
-                        <input type="checkbox" name="selected_devices" value='{{"ip_address":"{}","mac_address":"{}","hostname":"{}"}}' class="form-checkbox h-5 w-5 bg-gray-900 border-gray-600 text-emerald-600 focus:ring-emerald-500 rounded">
+                        <input type="checkbox" name="selected_devices" value='{{"ip_address":"{}","mac_address":"{}","hostname":"{}"}}' class="device-checkbox form-checkbox h-5 w-5 bg-gray-900 border-gray-600 text-emerald-600 focus:ring-emerald-500 rounded">
                         <div>
                             <p class="font-semibold text-white">{}</p>
                             <p class="text-sm text-gray-400">{}</p>
@@ -403,6 +414,52 @@ async fn discovery_scan_handler(State(app_state): State<AppState>) -> impl IntoR
         </div>
         "#);
         discovered_devices_html.push_str("</form>");
+        
+        // Add JavaScript for select all functionality
+        discovered_devices_html.push_str(r#"
+        <script>
+            document.getElementById('select-all').addEventListener('change', function() {
+                const checkboxes = document.querySelectorAll('.device-checkbox');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+                updateSelectionCount();
+            });
+            
+            // Update selection count when individual checkboxes change
+            document.querySelectorAll('.device-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    updateSelectionCount();
+                    updateSelectAllState();
+                });
+            });
+            
+            function updateSelectionCount() {
+                const selectedCount = document.querySelectorAll('.device-checkbox:checked').length;
+                const totalCount = document.querySelectorAll('.device-checkbox').length;
+                document.getElementById('selection-count').textContent = selectedCount + ' of ' + totalCount + ' devices selected';
+            }
+            
+            function updateSelectAllState() {
+                const checkboxes = document.querySelectorAll('.device-checkbox');
+                const checkedBoxes = document.querySelectorAll('.device-checkbox:checked');
+                const selectAllCheckbox = document.getElementById('select-all');
+                
+                if (checkedBoxes.length === 0) {
+                    selectAllCheckbox.indeterminate = false;
+                    selectAllCheckbox.checked = false;
+                } else if (checkedBoxes.length === checkboxes.length) {
+                    selectAllCheckbox.indeterminate = false;
+                    selectAllCheckbox.checked = true;
+                } else {
+                    selectAllCheckbox.indeterminate = true;
+                }
+            }
+            
+            // Initialize counts
+            updateSelectionCount();
+        </script>
+        "#);
     }
 
     Html(discovered_devices_html)
@@ -413,14 +470,29 @@ async fn generate_config_handler(
     State(app_state): State<AppState>,
     body: String,
 ) -> impl IntoResponse {
-    println!("Generating config with selected devices...");
-
-    let selected_ips: Vec<String> = serde_urlencoded::from_str::<Vec<(String, String)>>(&body)
+    let selected_json_strings: Vec<String> = serde_urlencoded::from_str::<Vec<(String, String)>>(&body)
         .unwrap_or_default()
         .into_iter()
         .filter_map(|(key, value)| {
             if key == "selected_devices" {
                 Some(value)
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    // Parse the JSON strings to extract IP addresses
+    let selected_ips: Vec<String> = selected_json_strings
+        .iter()
+        .filter_map(|json_str| {
+            // Parse the JSON string to extract the IP address
+            if let Ok(json_value) = serde_json::from_str::<serde_json::Value>(json_str) {
+                if let Some(ip) = json_value.get("ip_address").and_then(|v| v.as_str()) {
+                    Some(ip.to_string())
+                } else {
+                    None
+                }
             } else {
                 None
             }
@@ -438,31 +510,54 @@ async fn generate_config_handler(
         .filter(|device| selected_ips.contains(&device.ip_address))
         .collect();
 
-    println!(
-        "Selected {} devices for config generation",
-        selected_devices.len()
-    );
-
     let config_yaml = generate_config_yaml(&app_state.config, &selected_devices).await;
 
+    // Store the generated config for download
+    {
+        let mut stored_config = GENERATED_CONFIG.lock().await;
+        *stored_config = Some(config_yaml.clone());
+    }
+
     let response_html = format!(
-        r#"<div id="config-preview">
-            <h3 class="text-2xl font-bold text-white mb-4">Generated Configuration</h3>
-            <div class="bg-gray-900 rounded-lg p-4 border border-gray-700 mb-4">
-                <pre><code class="language-yaml">{}</code></pre>
+        r#"<div id="config-preview" class="glass rounded-2xl p-6 sm:p-8 mb-8 card-hover">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                <h3 class="text-xl sm:text-2xl font-bold text-white">Generated Configuration</h3>
+                <div class="flex items-center space-x-2">
+                    <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                    <span class="text-white/80 text-sm">Ready to download</span>
+                </div>
             </div>
-            <div class="flex items-center justify-between gap-4">
-                <p class="text-sm text-gray-400">Review the configuration and save it to your <code class="bg-gray-700 text-gray-300 px-2 py-1 rounded-md">config.yaml</code> file.</p>
-                <div class="flex gap-4">
-                    <button id="copy-button" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">Copy to Clipboard</button>
-                    <a href="/discovery/download" download="config.yaml" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-lg transition-colors no-underline">Download YAML</a>
+            <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 mb-6 overflow-x-auto">
+                <pre class="text-sm text-white/90 font-mono"><code>{}</code></pre>
+            </div>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <p class="text-sm text-white/70">Review the configuration and save it to your <code class="bg-white/20 text-white px-2 py-1 rounded-md font-mono text-xs">config.yaml</code> file.</p>
+                <div class="flex gap-3">
+                    <button id="copy-button" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 flex items-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
+                        <span>Copy</span>
+                    </button>
+                    <a href="/discovery/download-config" download="config.yaml" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 flex items-center space-x-2 no-underline">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <span>Download</span>
+                    </a>
                 </div>
             </div>
             <script>
                 document.getElementById('copy-button').addEventListener('click', () => {{
                     const textToCopy = `{}`;
                     navigator.clipboard.writeText(textToCopy).then(() => {{
-                        alert('Configuration copied to clipboard!');
+                        // Show success feedback
+                        const button = document.getElementById('copy-button');
+                        const originalText = button.innerHTML;
+                        button.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span>Copied!</span>';
+                        setTimeout(() => {{
+                            button.innerHTML = originalText;
+                        }}, 2000);
                     }}, (err) => {{
                         alert('Failed to copy configuration.');
                         console.error('Could not copy text: ', err);

@@ -125,49 +125,11 @@
           </div>
         </div>
 
-        <!-- Current Configuration -->
-        <div class="glass rounded-2xl p-6 sm:p-8 mb-8 card-hover">
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-            <h3 class="text-xl sm:text-2xl font-bold text-white">Current Configuration</h3>
-            <div class="flex items-center space-x-2">
-              <div class="w-2 h-2 bg-gray-400 rounded-full"></div>
-              <span class="text-white/80 text-sm">{{device_count}} devices configured</span>
-            </div>
-          </div>
-          
-          {{#if devices}}
-          <div class="grid gap-4">
-            {{#each devices}}
-            <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:bg-white/15 transition-all duration-200">
-              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div class="flex items-center space-x-3">
-                  <div class="bg-white/10 p-2 rounded-lg backdrop-blur-sm">
-                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                    </svg>
-                  </div>
-                  <div>
-                    <span class="font-semibold text-white">{{this.name}}</span>
-                    <p class="text-white/70 text-sm">{{this.ip_address}}</p>
-                  </div>
-                </div>
-                <span class="text-xs font-mono text-white/60 bg-white/5 px-3 py-1 rounded-lg">{{this.mac_address}}</span>
-              </div>
-            </div>
-            {{/each}}
-          </div>
-          {{else}}
-          <div class="text-center py-12">
-            <div class="bg-white/5 rounded-full p-6 w-20 h-20 mx-auto mb-4 backdrop-blur-sm">
-              <svg class="w-8 h-8 text-white/40 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-              </svg>
-            </div>
-            <p class="text-white/70">No devices currently configured</p>
-            <p class="text-white/50 text-sm mt-1">Use network discovery to find and add devices</p>
-          </div>
-          {{/if}}
+        <!-- Config Preview Section -->
+        <div id="config-preview" class="hidden">
+          <!-- Generated config will be loaded here -->
         </div>
+
       </div>
     </div>
   </body>
