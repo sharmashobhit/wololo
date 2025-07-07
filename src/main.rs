@@ -9,7 +9,6 @@ mod config;
 use crate::config::Config;
 use config::load_config; // Ensure Config is imported
 
-#[macro_use]
 extern crate serde_json;
 
 mod routes;

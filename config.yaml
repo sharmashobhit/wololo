@@ -1,3 +1,8 @@
+server:
+  ip: "0.0.0.0"
+  port: 3000
+  external_url: "http://localhost:3000"
+
 devices:
   - name: "Main PC"
     mac_address: "74:56:3c:76:23:1f"
