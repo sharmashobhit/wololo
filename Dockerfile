@@ -1,6 +1,5 @@
-# Use the official Rust image as build environment
-FROM rust:1.83-slim AS chef
-RUN cargo install cargo-chef
+# Use the faster Rust image with cargo-chef pre-installed
+FROM lukemathwalker/cargo-chef:latest-rust-1.83-slim AS chef
 WORKDIR /app
 
 FROM chef AS planner
