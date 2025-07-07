@@ -83,9 +83,14 @@ pub struct Config {
     pub devices: Vec<Device>,
 }
 
-// Function to load and parse config
-pub fn load_config() -> Result<Config, Box<dyn std::error::Error>> {
-    let config_str = fs::read_to_string("config.yaml")?;
+// Function to load and parse config from a specific file path
+pub fn load_config_from_path(path: &str) -> Result<Config, Box<dyn std::error::Error>> {
+    let config_str = fs::read_to_string(path)?;
     let config: Config = serde_yaml::from_str(&config_str)?;
     Ok(config)
+}
+
+// Function to load and parse config from default path
+pub fn load_config() -> Result<Config, Box<dyn std::error::Error>> {
+    load_config_from_path("config.yaml")
 }
