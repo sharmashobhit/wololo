@@ -17,7 +17,7 @@ use serde_json::json; // For constructing data for Handlebars - THIS REQUIRES se
 use std::net::{IpAddr, Ipv4Addr};
 use std::str::FromStr;
 use tokio::process::Command;
-use wol::*;
+use wol::{send_wol, MacAddr};
 
 use crate::config::Config;
 use handlebars::Handlebars;
@@ -80,24 +80,21 @@ async fn wake_device_handler(
 
     match device {
         Some(device) => {
-            // Parse MAC address
-            let mac_addr = match MacAddr::from_str(&device.mac_address) {
+            // Parse MAC address - Convert from string to MacAddr
+            let mac_addr = match parse_mac_address(&device.mac_address) {
                 Ok(mac) => mac,
                 Err(e) => {
                     eprintln!("Invalid MAC address for device '{}': {}", device_name, e);
                     return (
                         StatusCode::BAD_REQUEST,
-                        Html(format!(
-                            "<p class='text-red-600'>Invalid MAC address: {}</p>",
-                            e
-                        )),
+                        Html(format!("<p class='text-red-600'>{}</p>", e)),
                     )
                         .into_response();
                 }
             };
 
-            // Parse IP address for broadcast
-            let ip_addr = match Ipv4Addr::from_str(&device.ip_address) {
+            // Calculate broadcast address from device IP
+            let broadcast_ip = match calculate_broadcast_address(&device.ip_address) {
                 Ok(ip) => ip,
                 Err(e) => {
                     eprintln!("Invalid IP address for device '{}': {}", device_name, e);
@@ -113,7 +110,7 @@ async fn wake_device_handler(
             };
 
             // Send wake-on-LAN packet
-            match send_wol(mac_addr, Some(IpAddr::V4(ip_addr)), None) {
+            match send_wol(mac_addr, Some(broadcast_ip), None) {
                 Ok(_) => {
                     println!("Wake-on-LAN packet sent to device: {}", device_name);
                     Html(format!(
@@ -371,7 +368,7 @@ async fn discovery_scan_handler(State(app_state): State<AppState>) -> impl IntoR
     } else {
         discovered_devices_html.push_str("<form id=\"discovery-form\" hx-post=\"/discovery/generate-config\" hx-target=\"#config-preview\" hx-swap=\"outerHTML\">");
         discovered_devices_html.push_str("<div class=\"space-y-4\">");
-        
+
         // Add select all/unselect all controls
         discovered_devices_html.push_str(r#"
         <div class="flex items-center justify-between p-4 bg-white/5 rounded-lg backdrop-blur-sm border border-white/10">
@@ -414,7 +411,7 @@ async fn discovery_scan_handler(State(app_state): State<AppState>) -> impl IntoR
         </div>
         "#);
         discovered_devices_html.push_str("</form>");
-        
+
         // Add JavaScript for select all functionality
         discovered_devices_html.push_str(r#"
         <script>
@@ -470,17 +467,18 @@ async fn generate_config_handler(
     State(app_state): State<AppState>,
     body: String,
 ) -> impl IntoResponse {
-    let selected_json_strings: Vec<String> = serde_urlencoded::from_str::<Vec<(String, String)>>(&body)
-        .unwrap_or_default()
-        .into_iter()
-        .filter_map(|(key, value)| {
-            if key == "selected_devices" {
-                Some(value)
-            } else {
-                None
-            }
-        })
-        .collect();
+    let selected_json_strings: Vec<String> =
+        serde_urlencoded::from_str::<Vec<(String, String)>>(&body)
+            .unwrap_or_default()
+            .into_iter()
+            .filter_map(|(key, value)| {
+                if key == "selected_devices" {
+                    Some(value)
+                } else {
+                    None
+                }
+            })
+            .collect();
 
     // Parse the JSON strings to extract IP addresses
     let selected_ips: Vec<String> = selected_json_strings
@@ -760,6 +758,26 @@ pub async fn generate_config_yaml(
     }
 
     yaml_string
+}
+
+// Helper function to parse MAC address from string to MacAddr
+fn parse_mac_address(mac_str: &str) -> Result<MacAddr, String> {
+    MacAddr::from_str(mac_str).map_err(|e| format!("Failed to parse MAC address: {}", e))
+}
+
+// Helper function to calculate broadcast address from IP address
+fn calculate_broadcast_address(
+    ip_str: &str,
+) -> Result<std::net::IpAddr, Box<dyn std::error::Error>> {
+    let ip: Ipv4Addr = ip_str.parse()?;
+
+    // For simplicity, assume a /24 network (255.255.255.0 subnet mask)
+    // In a real implementation, you might want to detect the actual subnet mask
+    let ip_bytes = ip.octets();
+    let broadcast_bytes = [ip_bytes[0], ip_bytes[1], ip_bytes[2], 255];
+    let broadcast_ip = Ipv4Addr::from(broadcast_bytes);
+
+    Ok(IpAddr::V4(broadcast_ip))
 }
 
 // Function to create and configure the Axum router
