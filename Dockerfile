@@ -15,11 +15,17 @@ RUN apt-get update && apt-get install -y \
 
 # Copy the recipe and build dependencies
 COPY --from=planner /app/recipe.json recipe.json
-RUN cargo chef cook --release --recipe-path recipe.json
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/usr/local/cargo/git \
+    --mount=type=cache,target=/app/target \
+    cargo chef cook --release --recipe-path recipe.json
 
 # Copy source code and build
 COPY . .
-RUN cargo build --release
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/usr/local/cargo/git \
+    --mount=type=cache,target=/app/target \
+    cargo build --release
 
 # Use Ubuntu as runtime environment
 FROM ubuntu:22.04
