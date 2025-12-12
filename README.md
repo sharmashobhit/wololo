@@ -6,13 +6,15 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-A simple and efficient web-based Wake On LAN (WoL) management tool built with Rust, designed for homelab environments. Wololo provides an intuitive interface to manage and wake up devices on your local network.
+A simple and efficient web-based Wake On LAN (WoL) management tool built with Rust, designed for homelab environments. Wololo provides an intuitive interface to manage and wake up devices on your local network. With a minimal memory footprint (<5MB) and a fully config-driven architecture that requires no persistence layer, Wololo is perfect for GitOps workflows and resource-constrained environments.
 
 > **Note**: The project name "Wololo" is an homage to the iconic conversion sound from Age of Empires, where monks would chant "Wololo" to convert enemy units. Just like the monks converted units, this tool "converts" (wakes up) your devices! The sound effect played when waking devices is also a tribute to this classic game.
 
 ## Features
 
 - 🌐 **Web-based Interface**: Clean, responsive UI built with HTMX and Tailwind CSS
+- 💾 **Minimal Memory Footprint**: Runs with less than 5MB of memory usage, making it ideal for resource-constrained environments
+- 📝 **Config-Driven Architecture**: Fully configuration-based system with no persistence layer required. Perfect for GitOps workflows - commit your config to version control and deploy anywhere
 - 🔧 **YAML Configuration**: Simple device management through configuration files
 - 🔍 **Network Discovery**: Automatic device discovery with config generation
 - 📊 **Real-time Status**: Live device status monitoring with ping functionality
@@ -77,7 +79,7 @@ For development setup and technical details, see [Developer Guide](docs/GUIDE.md
 
 ## Configuration
 
-The application uses a YAML configuration file (`config.yaml`) to manage devices and server settings:
+Wololo is **fully config-driven** and requires no database or persistence layer. All settings and device configurations are stored in a single YAML file (`config.yaml`), making it perfect for GitOps workflows. Simply commit your configuration to version control and deploy it anywhere - the system will run entirely from the config file without any need for persistent storage.
 
 ```yaml
 server:
@@ -168,6 +170,9 @@ Wololo can be deployed in various ways:
 - **Docker**: Containerized deployment (recommended)
 - **Systemd**: Linux service deployment
 - **Reverse Proxy**: Behind Nginx, Traefik, or similar
+- **GitOps**: Perfect for Kubernetes ConfigMaps, Docker volumes, or any infrastructure-as-code setup
+
+With its minimal memory footprint (<5MB) and stateless, config-driven design, Wololo is ideal for containerized environments and can be easily managed through GitOps workflows. Simply mount your `config.yaml` file and the application runs entirely from configuration - no databases, no persistent volumes required.
 
 For detailed deployment instructions, see [Deployment Guide](docs/DEPLOYMENT.md) and [Container Guide](docs/CONTAINER.md).
 
