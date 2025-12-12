@@ -17,6 +17,7 @@ fn create_test_app_state() -> AppState {
             enabled: true,
             interval_seconds: 30,
         },
+        sound: SoundConfig::default(),
         devices: vec![
             Device {
                 name: "Test Device 1".to_string(),

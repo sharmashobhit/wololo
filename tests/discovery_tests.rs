@@ -36,6 +36,7 @@ async fn test_config_generation_with_discovered_devices() {
             enabled: true,
             interval_seconds: 30,
         },
+        sound: SoundConfig::default(),
         devices: vec![Device {
             name: "Existing Device".to_string(),
             mac_address: "11:22:33:44:55:66".to_string(),
@@ -95,6 +96,7 @@ async fn test_config_generation_no_discovered_devices() {
             enabled: false,
             interval_seconds: 60,
         },
+        sound: SoundConfig::default(),
         devices: vec![Device {
             name: "Only Device".to_string(),
             mac_address: "FF:EE:DD:CC:BB:AA".to_string(),
@@ -137,6 +139,7 @@ async fn test_discovery_with_special_characters() {
     let current_config = Config {
         server: ServerConfig::default(),
         sync: SyncConfig::default(),
+        sound: SoundConfig::default(),
         devices: vec![],
     };
 

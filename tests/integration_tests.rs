@@ -19,6 +19,7 @@ async fn test_full_application_flow() {
             enabled: true,
             interval_seconds: 30,
         },
+        sound: SoundConfig::default(),
         devices: vec![Device {
             name: "Test PC".to_string(),
             mac_address: "AA:BB:CC:DD:EE:FF".to_string(),
@@ -74,6 +75,7 @@ async fn test_discovery_workflow() {
     let app_state = AppState::new_for_test(Config {
         server: ServerConfig::default(),
         sync: SyncConfig::default(),
+        sound: SoundConfig::default(),
         devices: vec![],
     });
     let app = routes::app_router(app_state);
@@ -105,6 +107,7 @@ async fn test_error_handling() {
     let app_state = AppState::new_for_test(Config {
         server: ServerConfig::default(),
         sync: SyncConfig::default(),
+        sound: SoundConfig::default(),
         devices: vec![],
     });
     let app = routes::app_router(app_state);
@@ -140,6 +143,7 @@ async fn test_app_state_management() {
     let config = Config {
         server: ServerConfig::default(),
         sync: SyncConfig::default(),
+        sound: SoundConfig::default(),
         devices: vec![
             Device {
                 name: "Device 1".to_string(),
@@ -234,6 +238,7 @@ async fn test_config_validation() {
             external_url: "http://localhost:3000".to_string(),
         },
         sync: SyncConfig::default(),
+        sound: SoundConfig::default(),
         devices: vec![],
     };
 
@@ -249,6 +254,7 @@ async fn test_config_validation() {
             external_url: "http://localhost:0".to_string(),
         },
         sync: SyncConfig::default(),
+        sound: SoundConfig::default(),
         devices: vec![],
     };
 
@@ -272,6 +278,7 @@ async fn test_large_device_list() {
     let config = Config {
         server: ServerConfig::default(),
         sync: SyncConfig::default(),
+        sound: SoundConfig::default(),
         devices,
     };
 
