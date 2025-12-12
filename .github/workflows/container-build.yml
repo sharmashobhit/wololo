@@ -88,6 +88,10 @@ jobs:
 
   merge:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
     needs:
       - build-and-push
     steps:
@@ -120,10 +124,27 @@ jobs:
             type=semver,pattern={{major}}
 
       - name: Create manifest list and push
-        working-directory: /tmp/digests
         run: |
-          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@sha256:%s ' *)
+          # Verify digest files exist
+          if [ ! -d /tmp/digests ] || [ -z "$(ls -A /tmp/digests 2>/dev/null)" ]; then
+            echo "Error: No digest files found in /tmp/digests"
+            ls -la /tmp/digests || true
+            exit 1
+          fi
+          # Build tags with -t flag from metadata output (newline-separated)
+          TAGS=$(echo '${{ steps.meta.outputs.tags }}' | grep -v '^$' | sed 's/^/-t /' | tr '\n' ' ')
+          # Build digest references from files
+          DIGESTS=""
+          for f in /tmp/digests/*; do 
+            if [ -f "$f" ]; then
+              DIGEST_HASH=$(basename "$f")
+              DIGESTS="$DIGESTS ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@sha256:${DIGEST_HASH}"
+            fi
+          done
+          # Create manifest list
+          echo "Creating manifest with tags: $TAGS"
+          echo "Using digests: $DIGESTS"
+          docker buildx imagetools create $TAGS $DIGESTS
 
       - name: Inspect image
         run: |
