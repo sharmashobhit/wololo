@@ -23,39 +23,51 @@ A simple and efficient web-based Wake On LAN (WoL) management tool built with Ru
 
 ### Prerequisites
 
-- Rust 1.70.0 or higher
+- Docker (recommended) or Rust 1.70.0+ for building from source
 - Network devices with Wake On LAN support enabled
 
-### Installation
+### Docker Installation (Recommended)
 
-1. Clone the repository:
+1. Pull the container image:
+```bash
+docker pull ghcr.io/sharmashobhit/wololo:latest
+```
+
+2. Create a `config.yaml` file (see Configuration section below)
+
+3. Run the container:
+```bash
+docker run -d \
+  --name wololo \
+  -p 3000:3000 \
+  --network host \
+  -v $(pwd)/config.yaml:/app/config.yaml:ro \
+  ghcr.io/sharmashobhit/wololo:latest
+```
+
+4. Open your browser and navigate to `http://localhost:3000`
+
+For more deployment options, see [Deployment Guide](docs/DEPLOYMENT.md) and [Container Guide](docs/CONTAINER.md).
+
+### Building from Source
+
+If you prefer to build from source:
+
+1. Clone and build:
 ```bash
 git clone https://github.com/sharmashobhit/wololo.git
 cd wololo
-```
-
-2. Build the project:
-```bash
 cargo build --release
 ```
 
-3. Configure your devices in `config.yaml`:
-```yaml
-devices:
-  - name: "Main PC"
-    mac_address: "74:56:3c:76:23:1f"
-    ip_address: "192.168.29.185"
-  - name: "Living Room PC"
-    mac_address: "A0:B1:C2:D3:E4:F5"
-    ip_address: "192.168.1.101"
-```
+2. Configure your devices in `config.yaml` (see Configuration section)
 
-4. Run the application:
+3. Run:
 ```bash
-cargo run
+cargo run --release
 ```
 
-5. Open your browser and navigate to `http://localhost:3000`
+For development setup and technical details, see [Developer Guide](docs/GUIDE.md).
 
 ## Configuration
 
@@ -79,15 +91,17 @@ devices:
 
 ### Configuration Options
 
-- `server.ip`: IP address to bind the server (default: 0.0.0.0)
-- `server.port`: Port to run the server (default: 3000)
-- `server.external_url`: External URL for the application
-- `sync.enabled`: Enable/disable automatic device status refresh (default: true)
-- `sync.interval_seconds`: Interval for automatic refresh in seconds (default: 60)
+- `server.ip`: IP address to bind the server (default: `127.0.0.1`)
+- `server.port`: Port to run the server (default: `3000`)
+- `server.external_url`: External URL for the application (default: `http://127.0.0.1:3000`)
+- `sync.enabled`: Enable/disable automatic device status refresh (default: `true`)
+- `sync.interval_seconds`: Interval for automatic refresh in seconds (default: `60`)
 - `devices`: List of devices to manage
   - `name`: Friendly name for the device
-  - `mac_address`: MAC address of the device (required for WoL)
+  - `mac_address`: MAC address of the device (required for WoL, format: `XX:XX:XX:XX:XX:XX`)
   - `ip_address`: IP address of the device
+
+See `config-examples.yaml` for additional configuration examples.
 
 ## Device Discovery
 
@@ -107,34 +121,41 @@ Wololo includes a powerful network discovery feature to automatically find devic
 - **Selective Addition**: Choose which discovered devices to include
 - **Config Integration**: Merges with existing configuration seamlessly
 
-## Technology Stack
+## Usage
 
-- **Backend**: Rust with Axum web framework
-- **Frontend**: HTMX for dynamic interactions
-- **Styling**: Tailwind CSS
-- **Templating**: Handlebars
-- **Configuration**: YAML with serde
+### Dashboard
 
-## Project Structure
+The main dashboard displays all configured devices with their current status. You can:
+- View device online/offline status
+- Wake devices with a single click
+- Manually refresh device status
+- See auto-refresh status if enabled
 
-```
-wololo/
-├── src/
-│   ├── main.rs          # Application entry point
-│   ├── config.rs        # Configuration handling
-│   └── routes.rs        # HTTP route handlers
-├── frontend/
-│   └── index.html       # Main HTML template
-├── assets/
-│   ├── htmx.min.js     # HTMX library
-│   └── tailwind.min.js # Tailwind CSS
-├── config.yaml         # Device configuration
-└── Cargo.toml          # Rust dependencies
-```
+### Waking Devices
 
-## Contributing
+Click the "Wake" button next to any device to send a Wake On LAN packet. The device should power on if WoL is properly configured in its BIOS/UEFI settings.
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on how to get started.
+### Device Status
+
+Device status is checked via ping. Green indicates online, red indicates offline. Status refreshes automatically if sync is enabled, or manually via the "Refresh All" button.
+
+## Deployment
+
+Wololo can be deployed in various ways:
+
+- **Docker**: Containerized deployment (recommended)
+- **Systemd**: Linux service deployment
+- **Reverse Proxy**: Behind Nginx, Traefik, or similar
+
+For detailed deployment instructions, see [Deployment Guide](docs/DEPLOYMENT.md) and [Container Guide](docs/CONTAINER.md).
+
+## Documentation
+
+- **[Developer Guide](docs/GUIDE.md)** - Technical documentation, API reference, and development setup
+- **[Deployment Guide](docs/DEPLOYMENT.md)** - Deployment options and configurations
+- **[Container Guide](docs/CONTAINER.md)** - Container-specific documentation
+- **[Testing Guide](TESTING.md)** - Testing documentation
+- **[Contributing Guide](CONTRIBUTING.md)** - How to contribute to the project
 
 ## License
 
