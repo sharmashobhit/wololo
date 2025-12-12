@@ -126,6 +126,16 @@ async fn wake_device_handler(
             match send_wol(mac_addr, Some(broadcast_ip), None) {
                 Ok(_) => {
                     println!("Wake-on-LAN packet sent to device: {}", device_name);
+                    let sound_script = if app_state.config.sound.enabled {
+                        r#"<script>
+                            (function() {
+                                const audio = new Audio('/assets/wololo.mp3');
+                                audio.play().catch(err => console.log('Could not play sound:', err));
+                            })();
+                        </script>"#
+                    } else {
+                        ""
+                    };
                     Html(format!(
                         r#"<div class="wake-animation">
                             <div class="wake-success-icon">
@@ -134,8 +144,8 @@ async fn wake_device_handler(
                                 </svg>
                             </div>
                             <span class="text-emerald-400 font-medium">Wake packet sent to {}</span>
-                        </div>"#,
-                        device_name
+                        </div>{}"#,
+                        device_name, sound_script
                     ))
                     .into_response()
                 }

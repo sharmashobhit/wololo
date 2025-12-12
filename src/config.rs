@@ -31,6 +31,11 @@ fn default_sync_interval() -> u32 {
     60 // Default to 60 seconds
 }
 
+// Functions to provide default values for SoundConfig
+fn default_sound_enabled() -> bool {
+    true
+}
+
 // Struct for server configuration
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct ServerConfig {
@@ -73,6 +78,22 @@ impl Default for SyncConfig {
     }
 }
 
+// Struct for sound configuration
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct SoundConfig {
+    #[serde(default = "default_sound_enabled")]
+    pub enabled: bool,
+}
+
+// Implement Default for SoundConfig
+impl Default for SoundConfig {
+    fn default() -> Self {
+        SoundConfig {
+            enabled: default_sound_enabled(),
+        }
+    }
+}
+
 // Main configuration struct
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct Config {
@@ -80,6 +101,8 @@ pub struct Config {
     pub server: ServerConfig,
     #[serde(default)] // If the whole sync section is missing, use SyncConfig::default()
     pub sync: SyncConfig,
+    #[serde(default)] // If the whole sound section is missing, use SoundConfig::default()
+    pub sound: SoundConfig,
     pub devices: Vec<Device>,
 }
 

@@ -8,6 +8,8 @@
 
 A simple and efficient web-based Wake On LAN (WoL) management tool built with Rust, designed for homelab environments. Wololo provides an intuitive interface to manage and wake up devices on your local network.
 
+> **Note**: The project name "Wololo" is an homage to the iconic conversion sound from Age of Empires, where monks would chant "Wololo" to convert enemy units. Just like the monks converted units, this tool "converts" (wakes up) your devices! The sound effect played when waking devices is also a tribute to this classic game.
+
 ## Features
 
 - 🌐 **Web-based Interface**: Clean, responsive UI built with HTMX and Tailwind CSS
@@ -29,6 +31,7 @@ A simple and efficient web-based Wake On LAN (WoL) management tool built with Ru
 ### Docker Installation (Recommended)
 
 1. Pull the container image:
+
 ```bash
 docker pull ghcr.io/sharmashobhit/wololo:latest
 ```
@@ -36,6 +39,7 @@ docker pull ghcr.io/sharmashobhit/wololo:latest
 2. Create a `config.yaml` file (see Configuration section below)
 
 3. Run the container:
+
 ```bash
 docker run -d \
   --name wololo \
@@ -54,6 +58,7 @@ For more deployment options, see [Deployment Guide](docs/DEPLOYMENT.md) and [Con
 If you prefer to build from source:
 
 1. Clone and build:
+
 ```bash
 git clone https://github.com/sharmashobhit/wololo.git
 cd wololo
@@ -63,6 +68,7 @@ cargo build --release
 2. Configure your devices in `config.yaml` (see Configuration section)
 
 3. Run:
+
 ```bash
 cargo run --release
 ```
@@ -81,7 +87,10 @@ server:
 
 sync:
   enabled: true
-  interval_seconds: 30  # Auto-refresh device status every 30 seconds
+  interval_seconds: 30 # Auto-refresh device status every 30 seconds
+
+sound:
+  enabled: true # Play sound when waking devices (default: true)
 
 devices:
   - name: "Device Name"
@@ -91,11 +100,23 @@ devices:
 
 ### Configuration Options
 
+#### Server Configuration
+
 - `server.ip`: IP address to bind the server (default: `127.0.0.1`)
 - `server.port`: Port to run the server (default: `3000`)
 - `server.external_url`: External URL for the application (default: `http://127.0.0.1:3000`)
+
+#### Sync Configuration
+
 - `sync.enabled`: Enable/disable automatic device status refresh (default: `true`)
 - `sync.interval_seconds`: Interval for automatic refresh in seconds (default: `60`)
+
+#### Sound Configuration
+
+- `sound.enabled`: Enable/disable sound playback when waking devices (default: `true`). When enabled, plays the classic "Wololo" sound effect from Age of Empires when a wake packet is sent.
+
+#### Device Configuration
+
 - `devices`: List of devices to manage
   - `name`: Friendly name for the device
   - `mac_address`: MAC address of the device (required for WoL, format: `XX:XX:XX:XX:XX:XX`)
@@ -126,6 +147,7 @@ Wololo includes a powerful network discovery feature to automatically find devic
 ### Dashboard
 
 The main dashboard displays all configured devices with their current status. You can:
+
 - View device online/offline status
 - Wake devices with a single click
 - Manually refresh device status
@@ -133,7 +155,7 @@ The main dashboard displays all configured devices with their current status. Yo
 
 ### Waking Devices
 
-Click the "Wake" button next to any device to send a Wake On LAN packet. The device should power on if WoL is properly configured in its BIOS/UEFI settings.
+Click the "Wake" button next to any device to send a Wake On LAN packet. The device should power on if WoL is properly configured in its BIOS/UEFI settings. If sound is enabled in your configuration, you'll hear the classic "Wololo" sound effect when the wake packet is sent!
 
 ### Device Status
 
