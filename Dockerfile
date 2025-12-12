@@ -25,7 +25,8 @@ COPY . .
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/local/cargo/git \
     --mount=type=cache,target=/app/target \
-    cargo build --release
+    cargo build --release && \
+    cp /app/target/release/wololo /app/wololo
 
 # Use Ubuntu as runtime environment
 FROM ubuntu:22.04
@@ -44,8 +45,8 @@ RUN useradd -r -s /bin/false -m -d /app wololo
 # Set working directory
 WORKDIR /app
 
-# Copy the binary from builder
-COPY --from=builder /app/target/release/wololo ./
+# Copy the binary from builder (copied outside cache mount)
+COPY --from=builder /app/wololo ./
 
 # Create default config
 RUN echo 'server:\n  ip: "0.0.0.0"\n  port: 3000\n  external_url: "http://localhost:3000"\n\nsync:\n  enabled: false\n  interval_seconds: 30\n\ndevices: []' > ./config.yaml
