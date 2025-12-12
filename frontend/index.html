@@ -3,7 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Wake On LAN management tool for homelab environments" />
     <title>Wololo - Wake On LAN</title>
+    <link rel="icon" type="image/png" href="/assets/logo/logo_128x128.png" />
     <script src="/assets/htmx.min.js"></script>
     <script src="/assets/tailwind.min.js"></script>
     <link rel="stylesheet" href="/assets/styles.css" />
@@ -63,7 +65,8 @@
               hx-swap="innerHTML"
               hx-indicator="#refresh-button"
               id="refresh-button"
-              class="btn-primary">
+              aria-label="Refresh all device statuses"
+              class="btn-primary focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-gray-800">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
               </svg>

@@ -373,7 +373,21 @@ async fn discovery_handler(State(app_state): State<AppState>) -> impl IntoRespon
 
 // Network interfaces handler - returns available network interfaces
 async fn discovery_interfaces_handler() -> impl IntoResponse {
-    let interfaces = NetworkInterface::show().unwrap_or_default();
+    let interfaces = match NetworkInterface::show() {
+        Ok(interfaces) => interfaces,
+        Err(e) => {
+            eprintln!("Failed to get network interfaces: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({
+                    "error": "Failed to retrieve network interfaces",
+                    "interfaces": []
+                })),
+            )
+                .into_response();
+        }
+    };
+
     let mut interface_list = Vec::new();
 
     for interface in interfaces {
@@ -389,7 +403,11 @@ async fn discovery_interfaces_handler() -> impl IntoResponse {
         }
     }
 
-    Json(json!({ "interfaces": interface_list }))
+    if interface_list.is_empty() {
+        eprintln!("Warning: No valid network interfaces found");
+    }
+
+    Json(json!({ "interfaces": interface_list })).into_response()
 }
 
 // Network scan handler
@@ -403,17 +421,28 @@ async fn discovery_scan_handler(
     let selected_interfaces: Vec<String> = if body.is_empty() {
         Vec::new() // If no body, scan all interfaces
     } else {
-        serde_urlencoded::from_str::<Vec<(String, String)>>(&body)
-            .unwrap_or_default()
-            .into_iter()
-            .filter_map(|(key, value)| {
-                if key == "interfaces" {
-                    Some(value)
-                } else {
-                    None
-                }
-            })
-            .collect()
+        match serde_urlencoded::from_str::<Vec<(String, String)>>(&body) {
+            Ok(params) => params
+                .into_iter()
+                .filter_map(|(key, value)| {
+                    if key == "interfaces" && !value.is_empty() {
+                        // Basic validation: ensure interface name doesn't contain dangerous characters
+                        if value.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_' || c == '.') {
+                            Some(value)
+                        } else {
+                            eprintln!("Warning: Invalid interface name received: {}", value);
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                })
+                .collect(),
+            Err(e) => {
+                eprintln!("Failed to parse request body: {}", e);
+                Vec::new() // Fallback to scanning all interfaces
+            }
+        }
     };
 
     // Discover devices on the network
@@ -684,8 +713,20 @@ async fn discover_network_devices(selected_interfaces: Option<Vec<String>>) -> V
     let mut discovered_devices = Vec::new();
 
     // Get network interfaces
-    let interfaces = NetworkInterface::show().unwrap_or_default();
+    let interfaces = match NetworkInterface::show() {
+        Ok(interfaces) => interfaces,
+        Err(e) => {
+            eprintln!("Failed to get network interfaces: {}", e);
+            return discovered_devices;
+        }
+    };
 
+    if interfaces.is_empty() {
+        eprintln!("Warning: No network interfaces available");
+        return discovered_devices;
+    }
+
+    let mut scanned_interfaces = 0;
     for interface in interfaces {
         // Filter by selected interfaces if provided
         if let Some(ref selected) = selected_interfaces {
@@ -703,12 +744,19 @@ async fn discover_network_devices(selected_interfaces: Option<Vec<String>>) -> V
             let network_str = format!("{}/24", addr.ip());
             if let Ok(network) = network_str.parse::<Ipv4Net>() {
                 println!("Scanning network: {} on interface {}", network, interface.name);
+                scanned_interfaces += 1;
 
                 // Scan the network range
                 let scan_results = scan_network_range(network).await;
                 discovered_devices.extend(scan_results);
+            } else {
+                eprintln!("Warning: Failed to parse network for interface {}: {}", interface.name, network_str);
             }
         }
+    }
+
+    if scanned_interfaces == 0 {
+        eprintln!("Warning: No valid interfaces were scanned");
     }
 
     discovered_devices

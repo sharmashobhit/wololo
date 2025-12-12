@@ -3,7 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Network device discovery and Wake On LAN management tool"
+    />
     <title>Device Discovery - Wololo</title>
+    <link rel="icon" type="image/png" href="/assets/logo/logo_128x128.png" />
     <script src="/assets/htmx.min.js"></script>
     <script src="/assets/tailwind.min.js"></script>
     <link rel="stylesheet" href="/assets/styles.css" />
@@ -146,7 +151,9 @@
               <button
                 type="button"
                 id="open-interface-modal"
-                class="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white font-medium rounded-lg transition-colors text-sm"
+                aria-label="Select network interfaces"
+                aria-describedby="interface-count"
+                class="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white font-medium rounded-lg transition-colors text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-gray-800"
               >
                 <svg
                   class="w-4 h-4"
@@ -165,6 +172,7 @@
                 <span
                   id="interface-count"
                   class="bg-emerald-600 text-white text-xs px-2 py-0.5 rounded-full font-semibold"
+                  aria-live="polite"
                 >
                   0
                 </span>
@@ -176,7 +184,8 @@
                 hx-swap="innerHTML"
                 hx-indicator="#discovery-container"
                 hx-include="#interface-selector"
-                class="btn-primary w-full sm:w-auto justify-center"
+                aria-label="Start network scan"
+                class="btn-primary w-full sm:w-auto justify-center focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-gray-800"
               >
                 <svg
                   class="w-6 h-6"
@@ -264,7 +273,8 @@
             <button
               type="button"
               id="close-interface-modal"
-              class="text-white/70 hover:text-white transition-colors"
+              aria-label="Close interface selection modal"
+              class="text-white/70 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-white/50 rounded p-1"
             >
               <svg
                 class="w-6 h-6"
@@ -290,14 +300,16 @@
               <button
                 type="button"
                 id="select-all-interfaces"
-                class="text-sm text-white/70 hover:text-white px-3 py-1.5 rounded transition-colors bg-white/10 hover:bg-white/20"
+                aria-label="Select all network interfaces"
+                class="text-sm text-white/70 hover:text-white px-3 py-1.5 rounded transition-colors bg-white/10 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               >
                 Select All
               </button>
               <button
                 type="button"
                 id="deselect-all-interfaces"
-                class="text-sm text-white/70 hover:text-white px-3 py-1.5 rounded transition-colors bg-white/10 hover:bg-white/20"
+                aria-label="Deselect all network interfaces"
+                class="text-sm text-white/70 hover:text-white px-3 py-1.5 rounded transition-colors bg-white/10 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               >
                 Deselect All
               </button>
@@ -327,7 +339,8 @@
             <button
               type="button"
               onclick="loadInterfaces()"
-              class="mt-4 px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm rounded-lg transition-colors"
+              aria-label="Retry loading interfaces"
+              class="mt-4 px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               Retry
             </button>
@@ -340,14 +353,16 @@
             <button
               type="button"
               id="cancel-interface-modal"
-              class="px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-medium rounded-lg transition-colors"
+              aria-label="Cancel interface selection"
+              class="px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-white/50"
             >
               Cancel
             </button>
             <button
               type="button"
               id="save-interfaces"
-              class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors"
+              aria-label="Save selected interfaces"
+              class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-gray-800"
             >
               Save
             </button>
@@ -372,17 +387,51 @@
         const closeBtn = document.getElementById("close-interface-modal");
         const cancelBtn = document.getElementById("cancel-interface-modal");
         const saveBtn = document.getElementById("save-interfaces");
+        const scanBtn = document.getElementById("scan-button");
+
+        // Prevent double-clicks on scan button
+        let isScanning = false;
+        scanBtn.addEventListener("click", (e) => {
+          if (isScanning) {
+            e.preventDefault();
+            return false;
+          }
+          isScanning = true;
+          setTimeout(() => {
+            isScanning = false;
+          }, 60000); // Reset after 60 seconds
+        });
 
         openBtn.addEventListener("click", () => {
           modal.classList.add("open");
+          // Focus first checkbox when modal opens for accessibility
+          setTimeout(() => {
+            const firstCheckbox = document.querySelector(".interface-checkbox");
+            if (firstCheckbox) firstCheckbox.focus();
+          }, 100);
         });
 
         closeBtn.addEventListener("click", closeModal);
         cancelBtn.addEventListener("click", closeModal);
         saveBtn.addEventListener("click", () => {
-          updateInterfaceSelector();
-          updateInterfaceCount();
-          closeModal();
+          const selectedCount = document.querySelectorAll(
+            ".interface-checkbox:checked"
+          ).length;
+          if (selectedCount === 0) {
+            if (
+              confirm(
+                "No interfaces selected. The scan will use all available interfaces. Continue?"
+              )
+            ) {
+              updateInterfaceSelector();
+              updateInterfaceCount();
+              closeModal();
+            }
+          } else {
+            updateInterfaceSelector();
+            updateInterfaceCount();
+            closeModal();
+          }
         });
 
         // Close modal when clicking outside
@@ -411,6 +460,11 @@
 
         try {
           const response = await fetch("/discovery/interfaces");
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
           const data = await response.json();
 
           loadingEl.classList.add("hidden");
@@ -428,14 +482,21 @@
                 <input
                   type="checkbox"
                   name="interfaces"
-                  value="${iface.name}"
-                  id="interface-${iface.name}"
+                  value="${escapeHtml(iface.name)}"
+                  id="interface-${escapeHtml(iface.name)}"
                   class="interface-checkbox form-checkbox h-5 w-5 bg-gray-900 border-gray-600 text-emerald-600 focus:ring-emerald-500 rounded"
-                  checked>
-                <label for="interface-${iface.name}" class="flex-1 cursor-pointer">
+                  checked
+                  aria-label="Select interface ${escapeHtml(iface.name)}">
+                <label for="interface-${escapeHtml(
+                  iface.name
+                )}" class="flex-1 cursor-pointer">
                   <div class="flex flex-col">
-                    <span class="text-white font-medium">${iface.name}</span>
-                    <span class="text-white/60 text-xs font-mono mt-0.5">${iface.ip}</span>
+                    <span class="text-white font-medium">${escapeHtml(
+                      iface.name
+                    )}</span>
+                    <span class="text-white/60 text-xs font-mono mt-0.5">${escapeHtml(
+                      iface.ip
+                    )}</span>
                   </div>
                 </label>
               `;
@@ -462,7 +523,27 @@
           loadingEl.classList.add("hidden");
           listEl.classList.add("hidden");
           errorEl.classList.remove("hidden");
+          errorEl.innerHTML = `
+            <p class="text-red-400 text-sm mb-2">Failed to load network interfaces</p>
+            <p class="text-white/60 text-xs mb-4">${escapeHtml(
+              error.message
+            )}</p>
+            <button
+              type="button"
+              onclick="loadInterfaces()"
+              class="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+              Retry
+            </button>
+          `;
         }
+      }
+
+      // XSS protection helper
+      function escapeHtml(text) {
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
       }
 
       function updateInterfaceSelector() {
