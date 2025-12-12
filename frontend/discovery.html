@@ -18,29 +18,105 @@
       #discovery-container.htmx-request #discovery-results {
         display: none;
       }
+
+      /* Modal styles */
+      #interface-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+      }
+
+      #interface-modal.open {
+        display: flex;
+      }
+
+      .modal-content {
+        background-color: #1f2937;
+        border: 1px solid #374151;
+        border-radius: 1rem;
+        max-width: 600px;
+        width: 100%;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3),
+          0 10px 10px -5px rgba(0, 0, 0, 0.2);
+      }
+
+      .modal-content::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .modal-content::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+      }
+
+      .modal-content::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
+      }
+
+      .modal-content::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
     </style>
   </head>
   <body class="min-h-screen gradient-bg">
     <!-- Navbar -->
     <nav class="glass border-b border-white/10 p-4">
-      <div class="container mx-auto max-w-6xl flex items-center justify-between">
+      <div
+        class="container mx-auto max-w-6xl flex items-center justify-between"
+      >
         <!-- Logo and Brand -->
         <div class="flex items-center space-x-3">
-          <img src="/assets/logo/logo_640x640.png" alt="Wololo Logo" class="w-8 h-8">
+          <img
+            src="/assets/logo/logo_128x128.png"
+            alt="Wololo Logo"
+            class="w-8 h-8"
+          />
           <h1 class="text-2xl font-bold text-white">wololo</h1>
         </div>
-        
+
         <!-- Navigation -->
         <div class="flex space-x-2 bg-white/10 rounded-xl p-1">
           <a href="/" class="nav-link">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+              ></path>
             </svg>
             <span>Dashboard</span>
           </a>
           <span class="nav-link active">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              ></path>
             </svg>
             <span>Discovery</span>
           </span>
@@ -51,26 +127,78 @@
     <div class="min-h-screen container-spacing">
       <div class="container mx-auto max-w-6xl">
         <!-- Discovery Section -->
-        <div id="discovery-container" class="glass rounded-2xl card-padding mb-8 card-hover">
-          <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8">
+        <div
+          id="discovery-container"
+          class="glass rounded-2xl card-padding mb-8 card-hover"
+        >
+          <div
+            class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8"
+          >
             <div class="flex-1">
-              <h2 class="text-2xl sm:text-3xl font-bold text-white mb-2">Network Discovery</h2>
-              <p class="text-white/80">Scan your network to discover devices and generate configuration</p>
+              <h2 class="text-2xl sm:text-3xl font-bold text-white mb-2">
+                Network Discovery
+              </h2>
+              <p class="text-white/80">
+                Scan your network to discover devices and generate configuration
+              </p>
             </div>
-            <div class="flex-shrink-0">
+            <div class="flex-shrink-0 flex items-center gap-4">
+              <button
+                type="button"
+                id="open-interface-modal"
+                class="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white font-medium rounded-lg transition-colors text-sm"
+              >
+                <svg
+                  class="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                  ></path>
+                </svg>
+                <span>Interfaces</span>
+                <span
+                  id="interface-count"
+                  class="bg-emerald-600 text-white text-xs px-2 py-0.5 rounded-full font-semibold"
+                >
+                  0
+                </span>
+              </button>
               <button
                 id="scan-button"
                 hx-post="/discovery/scan"
                 hx-target="#discovery-results"
                 hx-swap="innerHTML"
                 hx-indicator="#discovery-container"
-                class="btn-primary w-full sm:w-auto justify-center">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                hx-include="#interface-selector"
+                class="btn-primary w-full sm:w-auto justify-center"
+              >
+                <svg
+                  class="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  ></path>
                 </svg>
                 <span>Start Network Scan</span>
               </button>
             </div>
+          </div>
+
+          <!-- Hidden interface selector form for HTMX -->
+          <div id="interface-selector" class="hidden">
+            <!-- Checkboxes will be dynamically added here -->
           </div>
 
           <div id="scan-loading" class="text-center py-12 sm:py-16">
@@ -78,20 +206,41 @@
               <div class="spinner-ring w-16 h-16 mx-auto"></div>
               <div class="spinner-ping"></div>
             </div>
-            <p class="text-white/90 mt-6 text-lg sm:text-xl font-medium">Scanning network for devices...</p>
-            <p class="text-white/60 mt-2 text-sm sm:text-base">This may take 30-60 seconds</p>
+            <p class="text-white/90 mt-6 text-lg sm:text-xl font-medium">
+              Scanning network for devices...
+            </p>
+            <p class="text-white/60 mt-2 text-sm sm:text-base">
+              This may take 30-60 seconds
+            </p>
           </div>
 
           <div id="discovery-results">
             <!-- Discovery results will be loaded here -->
             <div class="text-center py-12 sm:py-16">
-              <div class="bg-white/10 rounded-full p-6 sm:p-8 w-24 h-24 sm:w-32 sm:h-32 mx-auto mb-6 sm:mb-8 backdrop-blur-sm">
-                <svg class="w-12 h-12 sm:w-16 sm:h-16 text-white/60 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              <div
+                class="bg-white/10 rounded-full p-6 sm:p-8 w-24 h-24 sm:w-32 sm:h-32 mx-auto mb-6 sm:mb-8 backdrop-blur-sm"
+              >
+                <svg
+                  class="w-12 h-12 sm:w-16 sm:h-16 text-white/60 mx-auto"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  ></path>
                 </svg>
               </div>
-              <h3 class="text-xl sm:text-2xl font-bold text-white mb-3">Ready to Discover</h3>
-              <p class="text-white/70 max-w-md mx-auto text-sm sm:text-base">Click "Start Network Scan" to discover devices on your network and automatically generate configuration</p>
+              <h3 class="text-xl sm:text-2xl font-bold text-white mb-3">
+                Ready to Discover
+              </h3>
+              <p class="text-white/70 max-w-md mx-auto text-sm sm:text-base">
+                Click "Start Network Scan" to discover devices on your network
+                and automatically generate configuration
+              </p>
             </div>
           </div>
         </div>
@@ -100,8 +249,272 @@
         <div id="config-preview" class="hidden">
           <!-- Generated config will be loaded here -->
         </div>
-
       </div>
     </div>
+
+    <!-- Interface Selection Modal -->
+    <div id="interface-modal">
+      <div class="modal-content">
+        <div class="p-6">
+          <!-- Modal Header -->
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-bold text-white">
+              Select Network Interfaces
+            </h3>
+            <button
+              type="button"
+              id="close-interface-modal"
+              class="text-white/70 hover:text-white transition-colors"
+            >
+              <svg
+                class="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                ></path>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Select All/Deselect All Controls -->
+          <div
+            class="flex items-center justify-between mb-4 p-3 bg-white/5 rounded-lg"
+          >
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                id="select-all-interfaces"
+                class="text-sm text-white/70 hover:text-white px-3 py-1.5 rounded transition-colors bg-white/10 hover:bg-white/20"
+              >
+                Select All
+              </button>
+              <button
+                type="button"
+                id="deselect-all-interfaces"
+                class="text-sm text-white/70 hover:text-white px-3 py-1.5 rounded transition-colors bg-white/10 hover:bg-white/20"
+              >
+                Deselect All
+              </button>
+            </div>
+            <span class="text-white/60 text-sm" id="modal-selection-count">
+              0 selected
+            </span>
+          </div>
+
+          <!-- Interfaces List -->
+          <div id="interfaces-loading" class="text-center py-8">
+            <div class="loading-spinner">
+              <div class="spinner-ring w-12 h-12 mx-auto"></div>
+            </div>
+            <p class="text-white/60 text-sm mt-4">Loading interfaces...</p>
+          </div>
+          <div
+            id="interfaces-list"
+            class="hidden space-y-2 max-h-96 overflow-y-auto"
+          >
+            <!-- Interfaces will be loaded here -->
+          </div>
+          <div id="interfaces-error" class="hidden text-center py-8">
+            <p class="text-red-400 text-sm">
+              Failed to load network interfaces
+            </p>
+            <button
+              type="button"
+              onclick="loadInterfaces()"
+              class="mt-4 px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm rounded-lg transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+
+          <!-- Modal Footer -->
+          <div
+            class="mt-6 flex justify-end gap-3 pt-4 border-t border-white/10"
+          >
+            <button
+              type="button"
+              id="cancel-interface-modal"
+              class="px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-medium rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              id="save-interfaces"
+              class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let interfacesData = [];
+
+      // Load available interfaces on page load
+      document.addEventListener("DOMContentLoaded", function () {
+        loadInterfaces();
+        setupModalHandlers();
+        updateInterfaceCount();
+      });
+
+      function setupModalHandlers() {
+        const modal = document.getElementById("interface-modal");
+        const openBtn = document.getElementById("open-interface-modal");
+        const closeBtn = document.getElementById("close-interface-modal");
+        const cancelBtn = document.getElementById("cancel-interface-modal");
+        const saveBtn = document.getElementById("save-interfaces");
+
+        openBtn.addEventListener("click", () => {
+          modal.classList.add("open");
+        });
+
+        closeBtn.addEventListener("click", closeModal);
+        cancelBtn.addEventListener("click", closeModal);
+        saveBtn.addEventListener("click", () => {
+          updateInterfaceSelector();
+          updateInterfaceCount();
+          closeModal();
+        });
+
+        // Close modal when clicking outside
+        modal.addEventListener("click", (e) => {
+          if (e.target === modal) {
+            closeModal();
+          }
+        });
+
+        // Close modal on Escape key
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape" && modal.classList.contains("open")) {
+            closeModal();
+          }
+        });
+      }
+
+      function closeModal() {
+        document.getElementById("interface-modal").classList.remove("open");
+      }
+
+      async function loadInterfaces() {
+        const loadingEl = document.getElementById("interfaces-loading");
+        const listEl = document.getElementById("interfaces-list");
+        const errorEl = document.getElementById("interfaces-error");
+
+        try {
+          const response = await fetch("/discovery/interfaces");
+          const data = await response.json();
+
+          loadingEl.classList.add("hidden");
+          errorEl.classList.add("hidden");
+          listEl.classList.remove("hidden");
+          listEl.innerHTML = "";
+
+          if (data.interfaces && data.interfaces.length > 0) {
+            interfacesData = data.interfaces;
+            data.interfaces.forEach((iface) => {
+              const interfaceItem = document.createElement("div");
+              interfaceItem.className =
+                "flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors border border-white/10";
+              interfaceItem.innerHTML = `
+                <input
+                  type="checkbox"
+                  name="interfaces"
+                  value="${iface.name}"
+                  id="interface-${iface.name}"
+                  class="interface-checkbox form-checkbox h-5 w-5 bg-gray-900 border-gray-600 text-emerald-600 focus:ring-emerald-500 rounded"
+                  checked>
+                <label for="interface-${iface.name}" class="flex-1 cursor-pointer">
+                  <div class="flex flex-col">
+                    <span class="text-white font-medium">${iface.name}</span>
+                    <span class="text-white/60 text-xs font-mono mt-0.5">${iface.ip}</span>
+                  </div>
+                </label>
+              `;
+              listEl.appendChild(interfaceItem);
+            });
+
+            // Add change listeners to update count
+            document
+              .querySelectorAll(".interface-checkbox")
+              .forEach((checkbox) => {
+                checkbox.addEventListener("change", updateModalSelectionCount);
+              });
+
+            // Initialize with all selected
+            updateInterfaceSelector();
+            updateInterfaceCount();
+            updateModalSelectionCount();
+          } else {
+            listEl.innerHTML =
+              '<p class="text-white/60 text-sm text-center py-8">No network interfaces found</p>';
+          }
+        } catch (error) {
+          console.error("Failed to load interfaces:", error);
+          loadingEl.classList.add("hidden");
+          listEl.classList.add("hidden");
+          errorEl.classList.remove("hidden");
+        }
+      }
+
+      function updateInterfaceSelector() {
+        const selector = document.getElementById("interface-selector");
+        selector.innerHTML = "";
+
+        document
+          .querySelectorAll(".interface-checkbox:checked")
+          .forEach((checkbox) => {
+            const hiddenInput = document.createElement("input");
+            hiddenInput.type = "hidden";
+            hiddenInput.name = "interfaces";
+            hiddenInput.value = checkbox.value;
+            selector.appendChild(hiddenInput);
+          });
+      }
+
+      function updateInterfaceCount() {
+        const count = document.querySelectorAll(
+          ".interface-checkbox:checked"
+        ).length;
+        const countEl = document.getElementById("interface-count");
+        countEl.textContent = count;
+      }
+
+      function updateModalSelectionCount() {
+        const count = document.querySelectorAll(
+          ".interface-checkbox:checked"
+        ).length;
+        const total = document.querySelectorAll(".interface-checkbox").length;
+        const countEl = document.getElementById("modal-selection-count");
+        countEl.textContent = `${count} of ${total} selected`;
+      }
+
+      // Select all interfaces
+      document.addEventListener("click", function (e) {
+        if (e.target.id === "select-all-interfaces") {
+          document
+            .querySelectorAll(".interface-checkbox")
+            .forEach((checkbox) => {
+              checkbox.checked = true;
+            });
+          updateModalSelectionCount();
+        } else if (e.target.id === "deselect-all-interfaces") {
+          document
+            .querySelectorAll(".interface-checkbox")
+            .forEach((checkbox) => {
+              checkbox.checked = false;
+            });
+          updateModalSelectionCount();
+        }
+      });
+    </script>
   </body>
 </html>

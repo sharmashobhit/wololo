@@ -2,7 +2,7 @@
 use axum::{
     extract::{Path, State},
     http::{HeaderMap, StatusCode},
-    response::{Html, IntoResponse},
+    response::{Html, IntoResponse, Json},
     routing::{get, post},
     Router,
 };
@@ -371,12 +371,53 @@ async fn discovery_handler(State(app_state): State<AppState>) -> impl IntoRespon
     }
 }
 
+// Network interfaces handler - returns available network interfaces
+async fn discovery_interfaces_handler() -> impl IntoResponse {
+    let interfaces = NetworkInterface::show().unwrap_or_default();
+    let mut interface_list = Vec::new();
+
+    for interface in interfaces {
+        if let Some(addr) = interface
+            .addr
+            .iter()
+            .find(|addr| addr.ip().is_ipv4() && !addr.ip().is_loopback())
+        {
+            interface_list.push(json!({
+                "name": interface.name,
+                "ip": addr.ip().to_string(),
+            }));
+        }
+    }
+
+    Json(json!({ "interfaces": interface_list }))
+}
+
 // Network scan handler
-async fn discovery_scan_handler(State(app_state): State<AppState>) -> impl IntoResponse {
+async fn discovery_scan_handler(
+    State(app_state): State<AppState>,
+    body: String,
+) -> impl IntoResponse {
     println!("Starting network discovery scan...");
 
+    // Parse selected interfaces from request body
+    let selected_interfaces: Vec<String> = if body.is_empty() {
+        Vec::new() // If no body, scan all interfaces
+    } else {
+        serde_urlencoded::from_str::<Vec<(String, String)>>(&body)
+            .unwrap_or_default()
+            .into_iter()
+            .filter_map(|(key, value)| {
+                if key == "interfaces" {
+                    Some(value)
+                } else {
+                    None
+                }
+            })
+            .collect()
+    };
+
     // Discover devices on the network
-    let discovered_devices = discover_network_devices().await;
+    let discovered_devices = discover_network_devices(Some(selected_interfaces)).await;
 
     // Store discovered devices in app state for later use
     {
@@ -639,13 +680,20 @@ pub struct DiscoveredDevice {
 }
 
 // Network discovery function
-async fn discover_network_devices() -> Vec<DiscoveredDevice> {
+async fn discover_network_devices(selected_interfaces: Option<Vec<String>>) -> Vec<DiscoveredDevice> {
     let mut discovered_devices = Vec::new();
 
     // Get network interfaces
     let interfaces = NetworkInterface::show().unwrap_or_default();
 
     for interface in interfaces {
+        // Filter by selected interfaces if provided
+        if let Some(ref selected) = selected_interfaces {
+            if !selected.is_empty() && !selected.contains(&interface.name) {
+                continue;
+            }
+        }
+
         if let Some(addr) = interface
             .addr
             .iter()
@@ -654,7 +702,7 @@ async fn discover_network_devices() -> Vec<DiscoveredDevice> {
             // Use a common subnet assumption for simplicity
             let network_str = format!("{}/24", addr.ip());
             if let Ok(network) = network_str.parse::<Ipv4Net>() {
-                println!("Scanning network: {}", network);
+                println!("Scanning network: {} on interface {}", network, interface.name);
 
                 // Scan the network range
                 let scan_results = scan_network_range(network).await;
@@ -820,6 +868,7 @@ pub fn app_router(app_state: AppState) -> Router {
         .route("/", get(root_handler))
         .route("/hello", get(hello_handler))
         .route("/discovery", get(discovery_handler))
+        .route("/discovery/interfaces", get(discovery_interfaces_handler))
         .route("/discovery/scan", post(discovery_scan_handler))
         .route("/discovery/generate-config", post(generate_config_handler))
         .route("/discovery/download-config", get(download_config_handler))

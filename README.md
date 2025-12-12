@@ -1,7 +1,7 @@
 # Wololo - Wake On LAN Management Tool
 
 <div align="center">
-  <img src="assets/logo/logo_640x640.png" alt="Wololo Logo" width="150" height="150">
+  <img src="assets/logo/logo_1024x1024.png" alt="Wololo Logo" width="150" height="150">
 </div>
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
