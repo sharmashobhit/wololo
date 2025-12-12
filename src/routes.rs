@@ -87,7 +87,15 @@ async fn wake_device_handler(
                     eprintln!("Invalid MAC address for device '{}': {}", device_name, e);
                     return (
                         StatusCode::BAD_REQUEST,
-                        Html(format!("<p class='text-red-600'>{}</p>", e)),
+                        Html(format!(
+                            r#"<div class="flex items-center gap-2 text-red-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                                <span>{}</span>
+                            </div>"#,
+                            e
+                        )),
                     )
                         .into_response();
                 }
@@ -101,7 +109,12 @@ async fn wake_device_handler(
                     return (
                         StatusCode::BAD_REQUEST,
                         Html(format!(
-                            "<p class='text-red-600'>Invalid IP address: {}</p>",
+                            r#"<div class="flex items-center gap-2 text-red-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                                <span>Invalid IP address: {}</span>
+                            </div>"#,
                             e
                         )),
                     )
@@ -114,7 +127,14 @@ async fn wake_device_handler(
                 Ok(_) => {
                     println!("Wake-on-LAN packet sent to device: {}", device_name);
                     Html(format!(
-                        "<p class='text-green-600'>✅ Wake packet sent to {}</p>",
+                        r#"<div class="wake-animation">
+                            <div class="wake-success-icon">
+                                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            </div>
+                            <span class="text-emerald-400 font-medium">Wake packet sent to {}</span>
+                        </div>"#,
                         device_name
                     ))
                     .into_response()
@@ -127,7 +147,12 @@ async fn wake_device_handler(
                     (
                         StatusCode::INTERNAL_SERVER_ERROR,
                         Html(format!(
-                            "<p class='text-red-600'>Failed to wake device: {}</p>",
+                            r#"<div class="flex items-center gap-2 text-red-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                                <span class="font-medium">Failed to wake device: {}</span>
+                            </div>"#,
                             e
                         )),
                     )
@@ -140,7 +165,12 @@ async fn wake_device_handler(
             (
                 StatusCode::NOT_FOUND,
                 Html(format!(
-                    "<p class='text-red-600'>Device '{}' not found</p>",
+                    r#"<div class="flex items-center gap-2 text-red-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                        <span class="font-medium">Device '{}' not found</span>
+                    </div>"#,
                     device_name
                 )),
             )
@@ -166,24 +196,26 @@ async fn ping_device_handler(
             // Ping the device
             let status = ping_device(&device.ip_address).await;
 
-            let (status_class, status_text, icon) = match status {
-                DeviceStatus::Online => ("bg-green-500 text-white", "Online", "🟢"),
-                DeviceStatus::Offline => ("bg-red-500 text-white", "Offline", "🔴"),
-                DeviceStatus::Unreachable => ("bg-yellow-500 text-white", "Unreachable", "🟡"),
+            let (status_class, status_text, status_bg_color) = match status {
+                DeviceStatus::Online => ("text-green-400", "Online", "bg-green-500"),
+                DeviceStatus::Offline => ("text-red-400", "Offline", "bg-red-500"),
+                DeviceStatus::Unreachable => ("text-yellow-400", "Unreachable", "bg-yellow-500"),
             };
 
             Html(format!(
-                r#"<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {}">
-                    <span class="mr-1">{}</span>
-                    {}
-                </span>"#,
-                status_class, icon, status_text
+                r#"<div class="flex items-center space-x-2 px-3 py-1 rounded-full bg-gray-700">
+                    <span class="w-2 h-2 rounded-full {}"></span>
+                    <span class="text-sm font-medium {}">{}</span>
+                </div>"#,
+                status_bg_color, status_class, status_text
             )).into_response()
         }
         None => (
             StatusCode::NOT_FOUND,
             Html(format!(
-                "<span class='text-red-600'>Device '{}' not found</span>",
+                r#"<div class="flex items-center space-x-2 px-3 py-1 rounded-full bg-gray-700">
+                    <span class="text-sm font-medium text-red-400">Device '{}' not found</span>
+                </div>"#,
                 device_name
             )),
         )
@@ -259,13 +291,13 @@ async fn refresh_all_handler(State(app_state): State<AppState>) -> impl IntoResp
                             </div>\
                         </div>\
                         <div class=\"flex flex-row lg:flex-col gap-3 lg:items-end\">\
-                            <button hx-get=\"/ping/{}\" hx-target=\"#status-{}\" hx-swap=\"innerHTML\" class=\"group flex-1 lg:flex-none bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2\">\
+                            <button id=\"ping-btn-{}\" hx-get=\"/ping/{}\" hx-target=\"#status-{}\" hx-swap=\"innerHTML\" hx-indicator=\"#ping-btn-{}\" class=\"group flex-1 lg:flex-none bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2\">\
                                 <svg class=\"w-4 h-4\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">\
                                     <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z\"></path>\
                                 </svg>\
                                 <span>Check</span>\
                             </button>\
-                            <button hx-post=\"/wake/{}\" hx-target=\"#wake-response-{}\" hx-swap=\"innerHTML\" class=\"group flex-1 lg:flex-none bg-emerald-700 hover:bg-emerald-600 text-white font-medium py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2\">\
+                            <button id=\"wake-btn-{}\" hx-post=\"/wake/{}\" hx-target=\"#wake-response-{}\" hx-swap=\"innerHTML\" hx-indicator=\"#wake-btn-{}\" class=\"group flex-1 lg:flex-none bg-emerald-700 hover:bg-emerald-600 text-white font-medium py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2\">\
                                 <svg class=\"w-4 h-4\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\">\
                                     <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M13 10V3L4 14h7v7l9-11h-7z\"></path>\
                                 </svg>\
@@ -277,7 +309,8 @@ async fn refresh_all_handler(State(app_state): State<AppState>) -> impl IntoResp
                 </div>",
                 device.name, index, status_bg_color, status_class, status_text,
                 device.ip_address, device.mac_address,
-                device.name, index, device.name, index, index
+                index, device.name, index, index,
+                index, device.name, index, index, index
             );
 
             devices_html.push_str(&device_html);
